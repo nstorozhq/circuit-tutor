@@ -15,6 +15,12 @@ ACTIONS = {
     "подсказка": "hint", "покажи ответ": "reference", "полный разбор": "walkthrough",
     "режим учителя": "teacher", "краткий режим": "teacher", "показать варианты": "options",
 }
+QUESTION_START = re.compile(
+    r"^(?:а )?(?:кто|где|когда|зачем|почему|сколько|"
+    r"что (?:такое|значит|называется|означает)|как (?:отличить|определить|найти|понять|решить)|"
+    r"в чем разница|чем отлича\w*)\b"
+)
+TOPIC_GUIDANCE = "Я помогаю разбирать соединение проводников."
 
 
 def new_state():
@@ -203,9 +209,7 @@ def help_reply(state, text):
         state.update(assisted=True, show_options=True)
         return with_prompt(state, "Варианты открыты.")
     is_reference = bool(target or action in ("reference", "walkthrough"))
-    is_lookup = request.startswith("справка") or (
-        text.strip().endswith("?") and bool(re.match(r"(что такое|что значит|как отличить) ", request))
-    )
+    is_lookup = request == "справка" or request.startswith("справка ") or QUESTION_START.match(request)
     if state["phase"] == "test" and (is_reference or is_lookup or action == "hint"):
         return with_prompt(state, "Разбор и справка доступны после сдачи контрольной.")
     if is_reference:
@@ -221,7 +225,7 @@ def help_reply(state, text):
     if is_lookup:
         matches = lookup(text)
         if not matches:
-            return "В базе урока есть материалы об узлах, последовательном, параллельном и смешанном соединениях."
+            return with_prompt(state, TOPIC_GUIDANCE + " Можешь спросить об узлах, последовательном или параллельном соединении.")
         return "\n\n".join(f"**{item['title']}.** {item['text']}" for item in matches)
     if action == "hint":
         hints = current_question(state).get("hints")
@@ -252,7 +256,7 @@ async def respond(state, text, model):
     if phase == "done":
         return "Урок завершён. Доступны справка, эталонные ответы и резервные схемы."
     if not text:
-        return with_prompt(state, "Напиши, что ты видишь на схеме, или выбери вариант ответа.")
+        return with_prompt(state, "Напиши ответ на текущий вопрос.")
     if phase == "trial":
         if not try_answer(text):
             return with_prompt(state, "Опиши элементы или связи на схеме. Если пока не получается, так и напиши.")
@@ -299,7 +303,7 @@ async def respond(state, text, model):
     if step == "nodes" and allows_correct_suggestion(phase, current, text):
         return grade(state, correct)
     grading_prompt = question(active_case(state), step)["prompt"] if phase == "spoken" else current["prompt"]
-    selected, status = await model.interpret(text, grading_prompt, choices)
+    selected, _ = await model.interpret(text, grading_prompt, choices)
     if selected is not None and 0 <= selected < len(choices):
         interpreted = choices[selected]
         if interpreted["key"] != "correct" or allows_correct_suggestion(phase, current, text):
@@ -307,8 +311,4 @@ async def respond(state, text, model):
             return f"Я понял твой ответ так: «{interpreted['text']}». Подтверди или исправь формулировку."
     if options_hidden(state):
         return with_prompt(state, "Не удалось проверить формулировку. Уточни результат или попроси показать варианты.")
-    if phase == "solo" and status in ("disabled", "unavailable"):
-        return with_prompt(state, "Разбор свободного текста сейчас недоступен. Сформулируй полный вывод и выбери эквивалентный вариант в списке вариантов.")
-    if status == "unavailable":
-        return with_prompt(state, "GigaChat сейчас недоступен. Выбери вариант в списке или повтори попытку.")
-    return with_prompt(state, "Пока не удалось однозначно сопоставить ответ. Укажи элементы, узлы и вывод, или выбери вариант.")
+    return with_prompt(state, TOPIC_GUIDANCE + " Можешь задать вопрос по теме, ответить своими словами или выбрать вариант.")

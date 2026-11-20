@@ -115,6 +115,14 @@ class LessonTests(unittest.TestCase):
         self.assertEqual(result["state"]["case_id"], "C01")
 
     def test_empty_and_off_topic_stay_on_step(self):
+        opening = self.session["state"]
+        for text in ("привет", "кто такой Дональд Трамп", "Где находится Париж?"):
+            with self.subTest(text=text):
+                result = self.send(text)
+                self.assertEqual(result["state"], opening)
+                self.assertIn("Я помогаю разбирать соединение проводников", result["message"]["text"])
+                self.assertIn(opening["question"], result["message"]["text"])
+                self.assertNotIn("Укажи элементы, узлы и вывод", result["message"]["text"])
         self.enter_training()
         for text in ("", "Кто выиграл чемпионат?"):
             result = self.send(text)
@@ -186,10 +194,12 @@ class LessonTests(unittest.TestCase):
 
     def test_incorrect_model_match_cannot_promote_unrelated_or_negative_answer(self):
         with tempfile.TemporaryDirectory() as folder:
-            with TestClient(create_app(Path(folder) / "test.sqlite3", FixtureModel())) as client:
+            model = FixtureModel()
+            with TestClient(create_app(Path(folder) / "test.sqlite3", model)) as client:
                 session = client.post("/api/sessions").json()
                 url = f"/api/sessions/{session['id']}/turns"
                 texts = (
+                    "Кто такой Дональд Трамп",
                     "Будем готовить фруктовый салат.",
                     "Мы не будем определять вид соединения проводников, будем измерять температуру.",
                     "Схема.",
@@ -201,8 +211,11 @@ class LessonTests(unittest.TestCase):
                     }).json()
                     self.assertFalse(result["state"]["pending"])
                     self.assertEqual(result["state"]["phase"], "goal")
+                    if version == 0:
+                        self.assertEqual(model.options, [])
 
     def test_knowledge_lookup_uses_approved_card(self):
-        result = self.send("Что такое узел?")
-        self.assertIn("непрерывным проводом", result["message"]["text"])
-        self.assertEqual(result["state"]["phase"], "goal")
+        for text in ("Что такое узел?", "Что называется узлом"):
+            result = self.send(text)
+            self.assertIn("непрерывным проводом", result["message"]["text"])
+            self.assertEqual(result["state"]["phase"], "goal")
