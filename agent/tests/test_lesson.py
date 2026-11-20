@@ -105,6 +105,26 @@ class LessonTests(unittest.TestCase):
         self.assertEqual(self.send("Не знаю")["state"]["phase"], "trial")
         self.assertEqual(len(self.client.get(self.url).json()["messages"]), 4)
 
+    def test_previously_rejected_correct_answer_recovers_without_losing_question(self):
+        history = [
+            {"id": "old-answer", "role": "user", "text": "Привет\nр1 и р2 верх\nр3 нижняя"},
+            {"id": "old-feedback", "role": "assistant", "text": "Попробуй ещё раз."},
+            {"id": "term", "role": "user", "text": "а что такое резистор?"},
+            {"id": "old-term-reply", "role": "assistant", "text": "Посмотри на ветви."},
+        ]
+        with closing(sqlite3.connect(self.db)) as db, db:
+            db.execute("UPDATE sessions SET version=2, history=?", (json.dumps(history),))
+        current = self.client.get(self.url).json()
+        self.assertEqual(current["state"]["step_label"], "Узлы")
+        self.assertIn("ответ о ветвях верный", current["messages"][-1]["text"])
+        self.assertIn("Резистор — элемент", current["messages"][-1]["text"])
+        self.assertEqual(len(current["messages"]), len(self.client.get(self.url).json()["messages"]))
+        self.session = current
+        result = self.send("R1: A–C; R2: C–B; R3: A–B")
+        self.assertEqual(result["state"]["step_label"], "Последовательные участки")
+        saved = self.client.get(self.url).json()
+        self.assertEqual(sum(m["id"] == "recover-verified-answer" for m in saved["messages"]), 1)
+
     def enter_spoken(self):
         self.enter_training()
         for case_id in ("C01", "C02"):

@@ -15,7 +15,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .accounts import Accounts, Credentials, check_origin
 from .model import GigaChat
-from .tutor import greeting, new_state, respond, view
+from .knowledge import lookup, norm
+from .tutor import QUESTION_START, greeting, new_state, respond, verified_training_answer, view
 
 ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(ROOT / ".env")
@@ -123,6 +124,21 @@ class Store:
                 history = [opening]
             else:
                 history.append(opening)
+        if state["phase"] == "trial" and any(
+            item["role"] == "user" and verified_training_answer(state, item["text"]) for item in history
+        ):
+            state.update(phase="guided", operation=1, pending=None, tries=0, case_correct=1)
+            explanation = ""
+            latest_user = next((item["text"] for item in reversed(history) if item["role"] == "user"), "")
+            if QUESTION_START.match(norm(latest_user)):
+                explanation = "\n\n".join(item["text"] for item in lookup(latest_user))
+            message = "Ранее отправленный ответ о ветвях верный. Продолжим с узлов."
+            if explanation:
+                message += "\n\n" + explanation
+            history.append({
+                "id": "recover-verified-answer", "role": "assistant",
+                "text": message + "\n\n" + view(state)["question"],
+            })
         if state["phase"] in ("compare", "method"):
             state.update(phase="guided", operation=1, pending=None, tries=0)
             history.append({

@@ -255,6 +255,26 @@ def support_reply(state, text, result=None):
     return help_reply(state, "подсказка")
 
 
+def verified_training_answer(state, text):
+    current = current_question(state)
+    if ("?" in text or QUESTION_START.match(norm(text)) or asks_for_help(text)
+            or state["phase"] in ("test", "done") or current.get("recalling")):
+        return False
+    shape = CIRCUITS[active_case(state)["id"]]
+    if state["phase"] == "trial":
+        branches, _ = shape.parallel[0]
+        expected = {
+            key: set(re.findall(r"[rl]\d+", branch.lower()))
+            for key, branch in zip(("upper", "lower"), branches)
+        }
+        return branch_claims(text) == expected
+    if current.get("step") in ("elements", "nodes"):
+        return allows_correct_suggestion(
+            state["phase"], current, resolve_ordinal_elements(text, shape.components),
+        )
+    return False
+
+
 async def respond(state, text, model, *, history=()):
     text = text.strip()
     request = norm(text)
@@ -269,21 +289,7 @@ async def respond(state, text, model, *, history=()):
             state["pending"] = None
             return with_prompt(state, "Напиши ответ точнее или выбери подходящий вариант.")
     current = current_question(state)
-    inquiry = "?" in text or QUESTION_START.match(request) or asks_for_help(text)
-    verified_answer = False
-    if not inquiry and state["phase"] not in ("test", "done"):
-        shape = CIRCUITS[active_case(state)["id"]]
-        if state["phase"] == "trial":
-            branches, _ = shape.parallel[0]
-            expected = {
-                key: set(re.findall(r"[rl]\d+", branch.lower()))
-                for key, branch in zip(("upper", "lower"), branches)
-            }
-            verified_answer = branch_claims(text) == expected
-        elif not current.get("recalling") and current.get("step") in ("elements", "nodes"):
-            verified_answer = allows_correct_suggestion(
-                state["phase"], current, resolve_ordinal_elements(text, shape.components),
-            )
+    verified_answer = verified_training_answer(state, text)
     exact_choice = any(answer_key(item["text"], current.get("step")) == answer_key(text, current.get("step"))
                        for item in current["choices"])
     command = request in ACTIONS and request != "подсказка" or bool(re.fullmatch(
