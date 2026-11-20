@@ -36,6 +36,10 @@ quotes=[{"source_id":"идентификатор","text":"дословный ф�
 Собирай только утверждения ученика. Не достраивай пропуски по эталону.
 Если есть отрицание или противоречие, не выдавай положительное сопоставление.
 Если ученик не знает, intent=unsure. Если неясно, intent=answer, option=null.
+Фразы «не уверен насчёт связи R1 и R2», «не понимаю», «сомневаюсь» — просьбы
+об объяснении. Для них intent=unsure, option=null, branches=[].
+Выбери quotes из источника с окончанием -help или -hint.
+Не пытайся оценивать такую реплику как решение задания.
 Всегда возвращай все пять полей. Никакого текста вне JSON."""
 
 
@@ -66,6 +70,32 @@ def tokens(text):
     # Prefixes connect inflections such as «узел», «узла», «узлом».
     return [word[:3] if len(word) > 3 else word for word in words]
 
+def asks_for_help(text):
+    return bool(re.search(
+        r"не уверен\w*|не понима\w*|не знаю|сомнева\w*|затрудня\w*|"
+        r"не получается|\bхз\b|подска\w*|помоги|объясни|откуда (?:я |мне )?зна",
+        norm(text),
+    ))
+
+
+def component_help(case, text):
+    named = set(re.findall(r"\b[rl][1-9]\d*\b", norm(text)))
+    shape = CIRCUITS[case["id"]]
+    selected = [(name, a, b) for name, a, b in shape.components if name.lower() in named]
+    if not selected:
+        return None
+    details = [
+        f"{name} подключён между {a} и {b}." if b else f"У {name} виден вывод в {a}, второй скрыт."
+        for name, a, b in selected
+    ]
+    if len(selected) == 2:
+        left, right = selected
+        common = {left[1], left[2]} & {right[1], right[2]} - {None}
+        if common:
+            details.append(f"Общие узлы {left[0]} и {right[0]} — {', '.join(sorted(common))}.")
+    details.append("Буквы рядом с точками обозначают узлы. Проследи провод от каждого вывода до буквы.")
+    return {"id": f"{case['id']}-component-help", "text": " ".join(details)}
+
 
 def retrieve(case, task, text, *, control=False):
     documents = [
@@ -89,10 +119,13 @@ def retrieve(case, task, text, *, control=False):
                for score, doc in sorted(scores, key=lambda pair: -pair[0])[:3] if score > 0]
     if control:
         return []
+    help_document = component_help(case, text)
+    if help_document:
+        sources.append(help_document)
     step = task.get("step")
     if "hints" in task:
         sources.append({"id": f"{case['id']}-{step or 'trial'}-hint", "text": " ".join(task["hints"])})
-    if step in STEPS and not re.search(r"подска|помоги|не понимаю", norm(text)):
+    if step in STEPS and not asks_for_help(text):
         sources.append({"id": f"{case['id']}-{step}", "text": question(case, step)["reference"]})
     elif step != "recall":
         boxes = CIRCUITS[case["id"]].boxes

@@ -14,6 +14,7 @@ class RagModel:
 
     def __init__(self):
         self.requests = []
+        self.status = "matched"
         self.payload = {
             "intent": "answer", "option": None, "evidence": "", "quotes": [],
             "branches": [
@@ -25,10 +26,39 @@ class RagModel:
 
     async def rag(self, text, task, sources):
         self.requests.append((text, task, sources))
+        if self.status != "matched":
+            return None, self.status
         return validate_result(RagResult.model_validate(self.payload), text, sources, task["choices"]), "matched"
 
 
 class RagTests(unittest.TestCase):
+    def test_uncertainty_explains_named_components_without_grading(self):
+        model = RagModel()
+        with tempfile.TemporaryDirectory() as folder:
+            with TestClient(create_app(Path(folder) / "test.db", model)) as client:
+                session = client.post("/api/sessions").json()
+                path = f"/api/sessions/{session['id']}/turns"
+                session = client.post(path, json={
+                    "version": 0, "message_id": "start",
+                    "text": "r1 на верхней r2 на верхней\nr3 на нижней",
+                }).json()
+                model.payload = {"intent": "unsure", "branches": [], "quotes": []}
+                for status in ("matched", "unclear", "unavailable"):
+                    model.status = status
+                    session = client.post(path, json={
+                        "version": session["version"], "message_id": status,
+                        "text": "не уверен на счет связи р1 и р2",
+                    }).json()
+                    self.assertEqual(session["state"]["step_label"], "Узлы")
+                    self.assertFalse(session["state"]["pending"])
+                    self.assertIn("R1 подключён между A и C", session["message"]["text"])
+                    self.assertIn("R2 подключён между C и B", session["message"]["text"])
+                    self.assertIn("Общие узлы R1 и R2 — C", session["message"]["text"])
+                    self.assertNotIn("Не удалось проверить", session["message"]["text"])
+                    sources = model.requests[-1][2]
+                    self.assertIn("C01-component-help", [s["id"] for s in sources])
+                    self.assertNotIn("C01-nodes", [s["id"] for s in sources])
+
     def test_free_answer_uses_retrieval_and_merges_repeated_branches(self):
         model = RagModel()
         with tempfile.TemporaryDirectory() as folder:

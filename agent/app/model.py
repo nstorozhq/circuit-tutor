@@ -99,7 +99,12 @@ class GigaChat:
                 "sources": sources,
             }
             content = await self.complete(RAG_PROMPT, payload)
-            result = validate_result(RagResult.model_validate_json(content), text, sources, options)
+            payload = json.loads(content)
+            if isinstance(payload, dict):
+                # Some model versions emit unused empty collections. They carry no claims.
+                payload = {key: value for key, value in payload.items()
+                           if key in RagResult.model_fields or value not in (None, "", [], {})}
+            result = validate_result(RagResult.model_validate(payload), text, sources, options)
             logger.info("RAG validated: intent=%s, sources=%s", result.intent,
                         ",".join(source["id"] for source in sources))
             return result, "matched"

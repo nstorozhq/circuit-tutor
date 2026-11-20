@@ -232,6 +232,7 @@ def recall_question(step):
 
 
 def norm(value):
+    value = re.sub(r"\b[рp](\d+)\b", r"r\1", value, flags=re.I)
     return re.sub(r"[^\w]+", " ", value.lower().replace("ё", "е")).strip()
 
 

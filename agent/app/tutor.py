@@ -5,7 +5,7 @@ from .knowledge import (
     CASES, CIRCUITS, COURSE, INTRO, STEPS, STEP_NAMES, lookup, norm, question, recall_question,
     reference_answer
 )
-from .rag import retrieve
+from .rag import asks_for_help, component_help, retrieve
 
 PHASES = {
     "trial": "Первая попытка", "method": "Способ решения",
@@ -254,6 +254,12 @@ async def respond(state, text, model):
             state["last_rag"] = {
                 "status": rag_status, "source_ids": [source["id"] for source in sources],
             }
+        if (asks_for_help(text) or rag_result and rag_result.intent == "unsure") and state["phase"] != "trial":
+            state["assisted"] = True
+            explanation = component_help(active_case(state), text)
+            if explanation:
+                return with_prompt(state, "Давай разберём связь. " + explanation["text"])
+            return help_reply(state, "подсказка")
         if rag_result and rag_result.intent in ("question", "hint", "off_topic"):
             if re.search(r"подска|помоги", request) and current.get("hints"):
                 state["assisted"] = True
