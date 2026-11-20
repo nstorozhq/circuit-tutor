@@ -33,15 +33,15 @@ def branch_claims(raw):
     if re.search(ELEMENT_NEGATION, text) or re.search(UNSURE, text):
         return {}
     components = r"[rl][1-9]\d*(?: (?:и )?[rl][1-9]\d*)*"
-    directions = r"верх\w*|ниж\w*|сверху|снизу"
+    directions = r"верх\w*|ниж\w*|сверху|снизу|наверху|вверху|внизу"
     pattern = (
-        rf"(?P<names>{components}) (?:на )?(?P<direction>{directions})(?: вет\w*)?"
+        rf"(?P<names>{components}) (?:тоже )?(?:на )?(?P<direction>{directions})(?: вет\w*)?"
         rf"|(?P<leading_direction>{directions})(?: вет\w*)? (?P<following_names>{components})"
     )
     claims = {}
     for match in re.finditer(pattern, text):
         direction = match["direction"] or match["leading_direction"]
-        branch = "upper" if direction.startswith(("верх", "сверху")) else "lower"
+        branch = "upper" if direction.startswith(("верх", "сверху", "наверху", "вверху")) else "lower"
         names = set(COMPONENT.findall(match["names"] or match["following_names"]))
         claims.setdefault(branch, set()).update(names)
     if claims.get("upper", set()) & claims.get("lower", set()):
@@ -71,6 +71,28 @@ def node_claims(text):
             return {}
         result[name] = frozenset(found)
     return result
+
+
+def resolve_ordinal_elements(text, components):
+    roots = ("перв", "втор", "трет", "четверт", "пят", "шест",
+             "седьм", "восьм", "девят", "десят", "одиннадцат", "двенадцат")
+    result = norm(text)
+    for root, (name, _, _) in zip(roots, components):
+        result = re.sub(r"\b" + root + r"\w*\b", name.lower(), result)
+    return result
+
+
+def contradicts_all_elements(text, step, shape):
+    if step not in ("series", "parallel"):
+        return False
+    if not re.search(r"\b(?:все|всех|кажд\w*|люб\w*)\b", norm(text)):
+        return False
+    # Claims about whole branches are distinct from claims about every element.
+    if re.search(r"\b(?:ветв\w*|участ\w*)\b", norm(text)):
+        return False
+    names = {name for name, _, _ in shape.components}
+    groups = shape.series if step == "series" else shape.parallel
+    return not any(set(group) == names for group, _ in groups)
 
 
 def topology_key(text):

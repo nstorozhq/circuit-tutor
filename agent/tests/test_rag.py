@@ -24,7 +24,7 @@ class RagModel:
             ],
         }
 
-    async def rag(self, text, task, sources):
+    async def rag(self, text, task, sources, *, history=()):
         self.requests.append((text, task, sources))
         if self.status != "matched":
             return None, self.status
@@ -76,7 +76,7 @@ class RagTests(unittest.TestCase):
                 model.payload["branches"].pop(1)
                 another = client.post("/api/sessions").json()
                 result = client.post(f"/api/sessions/{another['id']}/turns",
-                                     json={"version": 0, "message_id": "partial", "text": text}).json()
+                                     json={"version": 0, "message_id": "partial", "text": "r1 на верхней\nr3 на нижней"}).json()
                 self.assertEqual(result["state"]["phase"], "trial")
 
     def test_ungrounded_quotes_and_invented_elements_are_rejected(self):

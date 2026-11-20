@@ -192,6 +192,7 @@ def question(case, step):
 CIRCUITS = {case["id"]: trace_circuit(case["circuit"]) for case in DATA["cases"]}
 INTRO = {
     "trial": {
+        "response_kind": "branches",
         "prompt": "Посмотри на две ветви от A до B. Какие резисторы на верхней ветви, а какие на нижней? Если пока трудно, напиши «не знаю».",
         "choices": [],
         "hints": (

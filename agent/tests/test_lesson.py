@@ -61,7 +61,7 @@ class LessonTests(unittest.TestCase):
         self.enter_training()
         self.send("R1: A–C; R2: C–B; R3: A–B")
 
-    def test_first_attempt_receives_help_and_continues_with_nodes(self):
+    def test_first_attempt_receives_help_without_skipping_the_task(self):
         opening = self.session["messages"][0]["text"]
         self.assertTrue(opening.startswith("Привет! Я твой помощник по физике."))
         self.assertIn("напиши «подсказка»", opening)
@@ -76,10 +76,10 @@ class LessonTests(unittest.TestCase):
         result = self.send("На схеме фруктовый салат.")
         self.assertEqual(result["state"]["phase"], "trial")
         result = self.send("Я то откуда знаю)")
-        self.assertEqual(result["state"]["phase"], "guided")
-        self.assertIn("Давай разберём вместе", result["message"]["text"])
+        self.assertEqual(result["state"]["phase"], "trial")
+        self.assertIn("От A проследи верхний провод", result["message"]["text"])
         self.assertNotIn("Смешанное", result["message"]["text"])
-        self.assertEqual(result["state"]["step_label"], "Узлы")
+        self.assertEqual(self.send("R1 и R2 сверху, R3 снизу")["state"]["step_label"], "Узлы")
 
     def test_branch_answer_is_checked_before_continuing(self):
         for text in ("R1 сверху, R2 и R3 снизу", "Не R1 и R2 сверху, а R3", "R1 и R2 сверху"):
@@ -102,7 +102,7 @@ class LessonTests(unittest.TestCase):
         self.assertEqual(current["state"]["phase"], "trial")
         self.assertFalse(current["state"]["pending"])
         self.session = current
-        self.assertEqual(self.send("Не знаю")["state"]["phase"], "guided")
+        self.assertEqual(self.send("Не знаю")["state"]["phase"], "trial")
         self.assertEqual(len(self.client.get(self.url).json()["messages"]), 4)
 
     def enter_spoken(self):

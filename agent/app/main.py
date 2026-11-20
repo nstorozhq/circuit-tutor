@@ -245,7 +245,7 @@ def create_app(db_path=None, model=None):
             raise HTTPException(409, "Урок уже обновился. Обнови страницу.")
         if version >= 300:
             raise HTTPException(409, "Достигнут лимит урока. Начни новую сессию.")
-        reply = await respond(state, turn.text, app.state.model)
+        reply = await respond(state, turn.text, app.state.model, history=history[-6:])
         message = {"id": "reply-" + turn.message_id, "role": "assistant", "text": reply}
         grounding = state.pop("last_rag", None)
         if grounding:
