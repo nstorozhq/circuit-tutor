@@ -43,9 +43,9 @@ def branch_claims(raw):
         direction = match["direction"] or match["leading_direction"]
         branch = "upper" if direction.startswith(("верх", "сверху")) else "lower"
         names = set(COMPONENT.findall(match["names"] or match["following_names"]))
-        if branch in claims and claims[branch] != names:
-            return {}
-        claims[branch] = names
+        claims.setdefault(branch, set()).update(names)
+    if claims.get("upper", set()) & claims.get("lower", set()):
+        return {}
     if set(COMPONENT.findall(text)) != set().union(*claims.values()):
         return {}
     return claims

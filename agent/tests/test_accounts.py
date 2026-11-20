@@ -14,6 +14,7 @@ class AccountsTests(unittest.TestCase):
     credentials = {"username": "student_test", "password": "test-password-254321"}
 
     def setUp(self):
+        self.enterContext(patch.dict("os.environ", {"GIGACHAT_CREDENTIALS": ""}))
         temporary = self.enterContext(tempfile.TemporaryDirectory())
         self.db = Path(temporary) / "lessons.sqlite3"
         with closing(sqlite3.connect(self.db)) as db, db:

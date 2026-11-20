@@ -247,6 +247,9 @@ def create_app(db_path=None, model=None):
             raise HTTPException(409, "Достигнут лимит урока. Начни новую сессию.")
         reply = await respond(state, turn.text, app.state.model)
         message = {"id": "reply-" + turn.message_id, "role": "assistant", "text": reply}
+        grounding = state.pop("last_rag", None)
+        if grounding:
+            message["grounding"] = grounding
         history.extend([{"id": turn.message_id, "role": "user", "text": turn.text}, message])
         result = {"version": version + 1, "state": view(state), "message": message}
         return app.state.store.commit(session_id, user_id, turn, state, history, result)

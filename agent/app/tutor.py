@@ -5,6 +5,7 @@ from .knowledge import (
     CASES, CIRCUITS, COURSE, INTRO, STEPS, STEP_NAMES, lookup, norm, question, recall_question,
     reference_answer
 )
+from .rag import retrieve
 
 PHASES = {
     "trial": "Первая попытка", "method": "Способ решения",
@@ -238,6 +239,41 @@ async def respond(state, text, model):
             return with_prompt(state, "Запиши ответ ещё раз для проверки.")
         if request in ("исправить", "нет"):
             return with_prompt(state, "Напиши ответ точнее или выбери подходящий вариант.")
+    current = current_question(state)
+    exact_choice = any(answer_key(item["text"], current.get("step")) == answer_key(text, current.get("step"))
+                       for item in current["choices"])
+    command = request in ACTIONS and request != "подсказка" or bool(re.fullmatch(
+        r"(?:покажи ответ|полный разбор|резерв)(?: c?\s*\d{1,2})?", request
+    ))
+    rag_result = None
+    rag_status = "disabled"
+    if text and not exact_choice and not command and state["phase"] not in ("test", "done") and hasattr(model, "rag"):
+        sources = retrieve(active_case(state), current, text)
+        rag_result, rag_status = await model.rag(text, current, sources)
+        if getattr(model, "enabled", False):
+            state["last_rag"] = {
+                "status": rag_status, "source_ids": [source["id"] for source in sources],
+            }
+        if rag_result and rag_result.intent in ("question", "hint", "off_topic"):
+            if re.search(r"подска|помоги", request) and current.get("hints"):
+                state["assisted"] = True
+                return with_prompt(state, current["hints"][0])
+            if rag_result.intent == "off_topic":
+                return with_prompt(state, TOPIC_GUIDANCE)
+            if rag_result.quotes:
+                if rag_result.intent == "hint":
+                    state["assisted"] = True
+                return with_prompt(state, "\n\n".join(quote.text for quote in rag_result.quotes))
+            matches = lookup(text)
+            if rag_result.intent == "question" and matches:
+                return with_prompt(state, "\n\n".join(item["text"] for item in matches))
+            if rag_result.intent == "hint":
+                return help_reply(state, "подсказка")
+            return with_prompt(state, "В материалах текущего урока нет достаточного пояснения. Уточни вопрос по схеме.")
+    if getattr(model, "enabled", False) and hasattr(model, "rag") and rag_status in ("unavailable", "unclear"):
+        if re.search(r"подска|помоги", request):
+            return help_reply(state, "подсказка")
+        return with_prompt(state, "Не удалось проверить ответ. Попробуй ещё раз или выбери готовый вариант, если он показан.")
     help_text = help_reply(state, text)
     if help_text is not None:
         return help_text
@@ -256,6 +292,17 @@ async def respond(state, text, model):
         }
         unsure = bool(re.search(r"не знаю|откуда (?:я |мне )?зна|затрудняюсь|не получается", request))
         claims = branch_claims(text)
+        if rag_result:
+            claims = {}
+            for branch in rag_result.branches:
+                claims.setdefault(branch.position, set()).update(element.lower() for element in branch.elements)
+            mentioned = set(re.findall(r"\b[rl][1-9]\d*\b", request))
+            claimed = set().union(*claims.values())
+            if claimed != mentioned or claims.get("upper", set()) & claims.get("lower", set()):
+                claims = {}
+            if re.search(r"\b(?:не|или)\b", request):
+                claims = {}
+            unsure = rag_result.intent == "unsure"
         if claims != expected and not unsure:
             if claims:
                 return with_prompt(state, "В расположении резисторов есть ошибка. Проследи каждую ветвь от A до B и проверь подписи.")
@@ -275,6 +322,9 @@ async def respond(state, text, model):
     correct = next((choice for choice in choices if choice["key"] == "correct"), None)
     naming_action = phase == "spoken" and not state.get("spoken_named", False)
     if naming_action:
+        if rag_result and rag_result.option:
+            selected = choices["ABCD".index(rag_result.option)]
+            return grade(state, selected)
         if recall_matches(step, text):
             response = grade(state, correct)
             _, separator, result = text.partition(".")
@@ -307,10 +357,15 @@ async def respond(state, text, model):
     if step == "nodes" and allows_correct_suggestion(phase, current, text):
         return grade(state, correct)
     grading_prompt = question(active_case(state), step)["prompt"] if phase == "spoken" else current["prompt"]
-    selected, _ = await model.interpret(text, grading_prompt, choices)
+    if rag_result:
+        selected = "ABCD".index(rag_result.option) if rag_result.option else None
+    elif hasattr(model, "rag"):
+        selected = None
+    else:
+        selected, _ = await model.interpret(text, grading_prompt, choices)
     if selected is not None and 0 <= selected < len(choices):
         interpreted = choices[selected]
-        if interpreted["key"] != "correct" or allows_correct_suggestion(phase, current, text):
+        if rag_result or interpreted["key"] != "correct" or allows_correct_suggestion(phase, current, text):
             state["pending"] = {"key": interpreted["key"], "prompt": current["prompt"]}
             return f"Я понял твой ответ так: «{interpreted['text']}». Подтверди или исправь формулировку."
     if options_hidden(state):

@@ -11,6 +11,8 @@ from uuid import uuid4
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from .rag import RagResult, SYSTEM_PROMPT as RAG_PROMPT, validate_result
+
 logger = logging.getLogger(__name__)
 AUTH_URL = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
 COMPLETIONS_URL = "https://api.giga.chat/v1/chat/completions"
@@ -62,44 +64,66 @@ class GigaChat:
         self.expires = expires / 1000 if expires > 10**11 else expires
         return self.token
 
+    async def complete(self, system, payload):
+        verify = ssl.create_default_context()
+        if self.ca_bundle:
+            verify.load_verify_locations(cafile=self.ca_bundle)
+        async with httpx.AsyncClient(verify=verify, timeout=20) as client:
+            request = {
+                "model": self.model, "temperature": 0.1, "max_tokens": 900,
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
+                ],
+            }
+            for _ in range(2):
+                token = await self.access_token(client)
+                response = await client.post(COMPLETIONS_URL, json=request,
+                                             headers={"Authorization": f"Bearer {token}"})
+                if response.status_code != 401:
+                    break
+                self.token = None
+            response.raise_for_status()
+        content = response.json()["choices"][0]["message"]["content"].strip()
+        return re.sub(r"^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$", "", content, flags=re.I)
+
+    async def rag(self, text, task, sources):
+        if not self.enabled:
+            return None, "disabled"
+        try:
+            options = task["choices"]
+            payload = {
+                "student_text": text,
+                "question": task["prompt"],
+                "options": dict(zip("ABCD", (item["text"] for item in options))),
+                "sources": sources,
+            }
+            content = await self.complete(RAG_PROMPT, payload)
+            result = validate_result(RagResult.model_validate_json(content), text, sources, options)
+            logger.info("RAG validated: intent=%s, sources=%s", result.intent,
+                        ",".join(source["id"] for source in sources))
+            return result, "matched"
+        except (ValidationError, ValueError, KeyError, IndexError, TypeError, AttributeError):
+            logger.warning("RAG output rejected by validation")
+            return None, "unclear"
+        except (httpx.HTTPError, OSError) as error:
+            logger.warning("GigaChat RAG request failed (%s)", type(error).__name__)
+            return None, "unavailable"
+
     async def interpret(self, answer, prompt, choices):
         if not self.enabled:
             return None, "disabled"
         try:
-            verify = ssl.create_default_context()
-            if self.ca_bundle:
-                verify.load_verify_locations(cafile=self.ca_bundle)
-            async with httpx.AsyncClient(verify=verify, timeout=12) as client:
-                request = {
-                    "model": self.model, "temperature": 0.1, "max_tokens": 350,
-                    "messages": [
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {"role": "user", "content": json.dumps({
-                            "student_text": answer,
-                            "question": prompt,
-                            "options": dict(zip("ABCD", (item["text"] for item in choices))),
-                        }, ensure_ascii=False)},
-                    ],
-                }
-                for _ in range(2):
-                    token = await self.access_token(client)
-                    response = await client.post(
-                        COMPLETIONS_URL, json=request, headers={"Authorization": f"Bearer {token}"},
-                    )
-                    if response.status_code != 401:
-                        break
-                    self.token = None
-                response.raise_for_status()
-            content = response.json()["choices"][0]["message"]["content"].strip()
-            content = re.sub(r"^\x60\x60\x60(?:json)?\s*|\s*\x60\x60\x60$", "", content, flags=re.I)
+            content = await self.complete(SYSTEM_PROMPT, {
+                "student_text": answer, "question": prompt,
+                "options": dict(zip("ABCD", (item["text"] for item in choices))),
+            })
             result = Interpretation.model_validate_json(content)
             if (result.option is not None and result.option in "ABCD"[:len(choices)]
                     and len(result.evidence.strip()) >= 3 and result.evidence in answer):
                 return "ABCD".index(result.option), "matched"
             return None, "unclear"
-        except ValidationError:
+        except (ValidationError, ValueError, KeyError, IndexError, TypeError, AttributeError):
             return None, "unclear"
-        except (httpx.HTTPError, OSError, ValueError, KeyError, IndexError, TypeError, AttributeError) as error:
-            status = error.response.status_code if isinstance(error, httpx.HTTPStatusError) else None
-            logger.warning("GigaChat request failed (%s, HTTP %s)", type(error).__name__, status)
+        except (httpx.HTTPError, OSError):
             return None, "unavailable"
