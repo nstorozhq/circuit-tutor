@@ -157,3 +157,46 @@ class CircuitClaimTests(unittest.TestCase):
         self.assertEqual(claims, {
             name.lower(): frozenset((a.lower(), b.lower())) for name, a, b in shape.components
         })
+
+
+class VerifiedAnswerPriorityTests(unittest.TestCase):
+    def test_verified_answer_survives_model_misrouting_and_failure(self):
+        from types import SimpleNamespace
+        from unittest.mock import AsyncMock
+        samples = (
+            "Привет\nр1 и р2 верх\nр3 нижняя",
+            "Здравствуйте, R1 и R2 сверху, R3 внизу",
+            "R1 на верхней R2 на верхней R3 на нижней",
+        )
+        for text in samples:
+            for intent, status in (("clarify", "matched"), ("unsure", "matched"), (None, "unavailable")):
+                with self.subTest(text=text, intent=intent, status=status):
+                    model = SimpleNamespace(enabled=True, rag=AsyncMock(return_value=(
+                        RagResult(intent=intent) if intent else None, status,
+                    )))
+                    state = new_state()
+                    reply = asyncio.run(respond(state, text, model))
+                    self.assertTrue(reply.startswith("Верно."))
+                    self.assertEqual(state["phase"], "guided")
+                    self.assertEqual(state["operation"], 1)
+                    self.assertEqual(model.rag.await_count, 1)
+
+    def test_definition_keeps_step_and_pending_answer(self):
+        from types import SimpleNamespace
+        from unittest.mock import AsyncMock
+        from app.rag import retrieve
+        from app.knowledge import CASES
+        state = lesson_state("C01", 2)
+        state["pending"] = {"key": "correct", "prompt": current_question(state)["prompt"]}
+        original = copy.deepcopy(state)
+        text = "а что такое резистор?"
+        sources = retrieve(CASES["C01"], current_question(state), text)
+        self.assertTrue(all(source["id"].startswith("concept-") for source in sources))
+        source = next(source for source in sources if source["id"] == "concept-6")
+        model = SimpleNamespace(enabled=True, rag=AsyncMock(return_value=(
+            RagResult(intent="question", explanation=source["text"], source_ids=[source["id"]]), "matched",
+        )))
+        reply = asyncio.run(respond(state, text, model))
+        self.assertIn("Резистор — элемент", reply)
+        for field in ("phase", "operation", "index", "scores", "pending"):
+            self.assertEqual(state[field], original[field])

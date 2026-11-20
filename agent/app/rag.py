@@ -143,22 +143,29 @@ def retrieve(case, task, text, *, control=False, history=()):
         for i, item in enumerate(DATA["concepts"])
     ]
     previous = " ".join(item["text"] for item in history[-4:] if item["role"] == "user")
-    query = Counter(tokens(text + " " + task["prompt"] + " " + previous))
+    query = Counter(tokens(task["prompt"] + " " + previous))
+    query.update({term: count * 3 for term, count in Counter(tokens(text)).items()})
     corpus = [Counter(tokens(doc["search"])) for doc in documents]
     average = sum(sum(count.values()) for count in corpus) / len(corpus)
     scores = []
     for doc, counts in zip(documents, corpus):
         score = 0
-        for term in query:
+        for term, query_count in query.items():
             frequency = counts[term]
             matches = sum(term in other for other in corpus)
             inverse = math.log(1 + (len(corpus) - matches + 0.5) / (matches + 0.5))
-            score += inverse * frequency * 2.2 / (frequency + 1.2 * (0.25 + 0.75 * sum(counts.values()) / average))
+            score += query_count * inverse * frequency * 2.2 / (frequency + 1.2 * (0.25 + 0.75 * sum(counts.values()) / average))
         scores.append((score, doc))
     sources = [{"id": doc["id"], "text": doc["text"]}
                for score, doc in sorted(scores, key=lambda pair: -pair[0])[:3] if score > 0]
     if control:
         return []
+    definition_question = re.search(
+        r"\b(?:что такое|что значит|что означает|что называется|чем отличается)\b", norm(text),
+    )
+    refers_to_drawing = re.search(r"\b(?:[rl][1-9]\d*|[a-z])\b", norm(text))
+    if definition_question and not refers_to_drawing:
+        return sources
     shape = CIRCUITS[case["id"]]
     rows = sorted({box["y"] for box in shape.boxes})
     positions = [

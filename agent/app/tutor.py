@@ -269,6 +269,21 @@ async def respond(state, text, model, *, history=()):
             state["pending"] = None
             return with_prompt(state, "Напиши ответ точнее или выбери подходящий вариант.")
     current = current_question(state)
+    inquiry = "?" in text or QUESTION_START.match(request) or asks_for_help(text)
+    verified_answer = False
+    if not inquiry and state["phase"] not in ("test", "done"):
+        shape = CIRCUITS[active_case(state)["id"]]
+        if state["phase"] == "trial":
+            branches, _ = shape.parallel[0]
+            expected = {
+                key: set(re.findall(r"[rl]\d+", branch.lower()))
+                for key, branch in zip(("upper", "lower"), branches)
+            }
+            verified_answer = branch_claims(text) == expected
+        elif not current.get("recalling") and current.get("step") in ("elements", "nodes"):
+            verified_answer = allows_correct_suggestion(
+                state["phase"], current, resolve_ordinal_elements(text, shape.components),
+            )
     exact_choice = any(answer_key(item["text"], current.get("step")) == answer_key(text, current.get("step"))
                        for item in current["choices"])
     command = request in ACTIONS and request != "подсказка" or bool(re.fullmatch(
@@ -284,11 +299,12 @@ async def respond(state, text, model, *, history=()):
                 "status": rag_status, "source_ids": [source["id"] for source in sources],
                 "intent": rag_result.intent if rag_result else None,
             }
-        if rag_result and rag_result.intent != "answer":
+        if rag_result and rag_result.intent != "answer" and not verified_answer:
             return support_reply(state, text, rag_result)
         if asks_for_help(text):
             return support_reply(state, text)
-    if getattr(model, "enabled", False) and hasattr(model, "rag") and rag_status in ("unavailable", "unclear"):
+    if (getattr(model, "enabled", False) and hasattr(model, "rag")
+            and rag_status in ("unavailable", "unclear") and not verified_answer):
         return support_reply(state, text)
     if asks_for_help(text) and state["phase"] not in ("test", "done"):
         return support_reply(state, text)
@@ -324,7 +340,7 @@ async def respond(state, text, model, *, history=()):
                 claims = {}
             if explicit_claims and explicit_claims != claims:
                 claims = explicit_claims
-            unsure = rag_result.intent == "unsure"
+            unsure = not verified_answer and rag_result.intent == "unsure"
         if claims != expected and not unsure:
             if claims:
                 return with_prompt(state, "В расположении резисторов есть ошибка. Проследи каждую ветвь от A до B и проверь подписи.")
