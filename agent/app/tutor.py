@@ -168,6 +168,8 @@ def grade(state, selected):
             state["assisted"] = True
         if phase == "solo":
             return with_prompt(state, "В этом выводе есть ошибка или ему не хватает основания. " + current["hints"][0])
+        if phase == "goal":
+            return with_prompt(state, f"Этот вариант не подходит. {selected['feedback']} Выбери другой вариант.")
         feedback = selected["feedback"]
         if state["tries"] >= 2 and "hints" in current:
             feedback = current["hints"][-1]
@@ -176,7 +178,7 @@ def grade(state, selected):
     state["tries"] = 0
     if phase == "goal":
         state["phase"] = "trial"
-        return with_prompt(state, "Потренируемся распознавать способ соединения.")
+        return with_prompt(state, "Верно. Переходим к первой схеме.")
     if phase == "method":
         return with_prompt(state, start_case(state))
     if phase == "spoken":
@@ -297,7 +299,7 @@ async def respond(state, text, model):
     if phase == "compare":
         return with_prompt(state, "Выбери, совпал ли твой вывод с ответом учителя.")
     if phase == "test":
-        return with_prompt(state, "На контрольной выбери один вариант и нажми «Ответить».")
+        return with_prompt(state, "На контрольной выбери один вариант и нажми «Отправить вариант».")
     if step == "elements" and elements_match(text, current["reference"]):
         return grade(state, correct)
     if step == "nodes" and allows_correct_suggestion(phase, current, text):

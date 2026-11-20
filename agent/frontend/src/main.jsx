@@ -29,7 +29,7 @@ const features = {
 const localeText = {
   composerInputPlaceholder: 'Ответ или вопрос',
   composerInputAriaLabel: 'Ответ ученика',
-  composerSendButtonLabel: 'Отправить ответ',
+  composerSendButtonLabel: 'Отправить сообщение',
   messageListLabel: 'Сообщения урока',
 };
 const authors = { assistant: 'Ассистент', user: 'Ты' };
@@ -91,7 +91,6 @@ function AnswerForm({ choices, question, independent, busy, send }) {
     event.preventDefault();
     if (busy || !answer || !visible) return;
     send(answer);
-    setAnswer('');
   }
 
   return (
@@ -116,7 +115,7 @@ function AnswerForm({ choices, question, independent, busy, send }) {
           </FormControl>
           <Button type="submit" variant="contained" disableElevation size="small"
             disabled={busy || !answer} sx={{ mt: 1.5 }}>
-            Ответить
+            Отправить вариант
           </Button>
         </Box>
       </Collapse>

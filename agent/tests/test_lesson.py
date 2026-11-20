@@ -54,7 +54,14 @@ class LessonTests(unittest.TestCase):
         self.choose("Выделить элементы, определить")
 
     def test_first_attempt_requires_relevant_answer_and_comparison(self):
+        wrong_goal = self.choose("Вычислять мощность")
+        self.assertEqual(wrong_goal["state"]["phase"], "goal")
+        self.assertIn("Этот вариант не подходит", wrong_goal["message"]["text"])
+        self.assertIn("Для вычисления мощности нужны числовые данные", wrong_goal["message"]["text"])
+        self.assertIn("Выбери другой вариант", wrong_goal["message"]["text"])
         self.choose("Определять способ")
+        self.assertEqual(self.session["state"]["phase"], "trial")
+        self.assertIsNotNone(self.session["state"]["circuit"])
         result = self.send("На схеме фруктовый салат.")
         self.assertEqual(result["state"]["phase"], "trial")
         result = self.send("Думаю, все три резистора последовательны.")
