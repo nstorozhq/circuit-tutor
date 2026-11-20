@@ -1,13 +1,13 @@
 import re
 
-from .answers import allows_correct_suggestion, answer_key, elements_match, recall_matches, try_answer
+from .answers import allows_correct_suggestion, answer_key, branch_claims, elements_match, recall_matches
 from .knowledge import (
     CASES, CIRCUITS, COURSE, INTRO, STEPS, STEP_NAMES, lookup, norm, question, recall_question,
     reference_answer
 )
 
 PHASES = {
-    "trial": "Первая попытка", "compare": "Сравнение", "method": "Способ решения",
+    "trial": "Первая попытка", "method": "Способ решения",
     "guided": "Разбор с помощью", "spoken": "Проговаривание", "solo": "Самостоятельно",
     "test": "Контрольная", "done": "Результат",
 }
@@ -139,14 +139,6 @@ def grade(state, selected):
     current = current_question(state)
     correct = selected["key"] == "correct"
     phase = state["phase"]
-    if phase == "compare":
-        state["phase"] = "method"
-        note = {
-            "same": "Вывод совпал. Теперь сформулируй способ, которым можно его обосновать.",
-            "different": "Разберём, как проверить ответ по схеме. Начнём с элементов и точек, к которым они подключены.",
-            "unclear": "Начни с двух выводов каждого элемента. Дальше проверим способ по шагам.",
-        }[selected["key"]]
-        return with_prompt(state, note)
     if phase == "solo" and not correct:
         state["assisted"] = True
 
@@ -255,15 +247,26 @@ async def respond(state, text, model):
     if not text:
         return with_prompt(state, "Напиши ответ на текущий вопрос.")
     if phase == "trial":
-        if not try_answer(text):
-            return with_prompt(state, TOPIC_GUIDANCE)
-        state["phase"] = "compare"
         case = active_case(state)
         branches, _ = CIRCUITS[case["id"]].parallel[0]
         upper, lower = (branch.strip("()") for branch in branches)
+        expected = {
+            key: set(re.findall(r"[rl]\d+", branch.lower()))
+            for key, branch in zip(("upper", "lower"), branches)
+        }
+        unsure = bool(re.search(r"не знаю|откуда (?:я |мне )?зна|затрудняюсь|не получается", request))
+        claims = branch_claims(text)
+        if claims != expected and not unsure:
+            if claims:
+                return with_prompt(state, "В расположении резисторов есть ошибка. Проследи каждую ветвь от A до B и проверь подписи.")
+            return with_prompt(state, "Напиши отдельно, какие обозначения стоят сверху и какие снизу. Если трудно, напиши «не знаю».")
+        state.update(phase="guided", operation=1, tries=0, case_correct=int(not unsure),
+                     assisted=state["assisted"] or unsure)
+        feedback = "Верно." if not unsure else "Давай разберём вместе."
         return with_prompt(
             state,
-            f"Ответ учителя:\n\nВерхняя ветвь — {upper}, нижняя — {lower}.\n\n" + reference_answer(case),
+            f"{feedback} В верхней ветви стоят {upper}, в нижней — {lower}. "
+            "Теперь проследим, к каким точкам подключён каждый резистор.",
         )
 
     current = current_question(state)
@@ -297,8 +300,6 @@ async def respond(state, text, model):
         return grade(state, exact)
     if naming_action:
         return with_prompt(state, "Назови действие своими словами или выбери его в списке.")
-    if phase == "compare":
-        return with_prompt(state, "Выбери, совпал ли твой вывод с ответом учителя.")
     if phase == "test":
         return with_prompt(state, "На контрольной выбери один вариант и нажми «Отправить вариант».")
     if step == "elements" and elements_match(text, current["reference"]):

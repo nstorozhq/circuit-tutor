@@ -54,15 +54,14 @@ class LessonTests(unittest.TestCase):
     def choose(self, start):
         return self.send(next(choice for choice in self.session["state"]["choices"] if choice.startswith(start)))
 
-    def enter_method(self):
-        self.send("Я вижу три резистора и разные ветви.")
-        self.choose("Мой вывод или обоснование")
-
     def enter_training(self):
-        self.enter_method()
-        self.choose("Выделить элементы, определить")
+        self.send("r1 и r2 на верхней\nr3 на нижней")
 
-    def test_first_attempt_requires_relevant_answer_and_comparison(self):
+    def enter_model_step(self):
+        self.enter_training()
+        self.send("R1: A–C; R2: C–B; R3: A–B")
+
+    def test_first_attempt_receives_help_and_continues_with_nodes(self):
         opening = self.session["messages"][0]["text"]
         self.assertTrue(opening.startswith("Привет! Я твой помощник по физике."))
         self.assertIn("напиши «подсказка»", opening)
@@ -77,13 +76,19 @@ class LessonTests(unittest.TestCase):
         result = self.send("На схеме фруктовый салат.")
         self.assertEqual(result["state"]["phase"], "trial")
         result = self.send("Я то откуда знаю)")
-        self.assertEqual(result["state"]["phase"], "compare")
-        self.assertIn("Ответ учителя", result["message"]["text"])
-        self.assertIn("Верхняя ветвь — R1–R2, нижняя — R3", result["message"]["text"])
-        self.assertIn("Смешанное", result["message"]["text"])
-        self.assertIsNotNone(result["state"]["circuit"])
-        self.choose("Мой вывод или обоснование")
-        self.assertEqual(self.session["state"]["phase"], "method")
+        self.assertEqual(result["state"]["phase"], "guided")
+        self.assertIn("Давай разберём вместе", result["message"]["text"])
+        self.assertNotIn("Смешанное", result["message"]["text"])
+        self.assertEqual(result["state"]["step_label"], "Узлы")
+
+    def test_branch_answer_is_checked_before_continuing(self):
+        for text in ("R1 сверху, R2 и R3 снизу", "Не R1 и R2 сверху, а R3", "R1 и R2 сверху"):
+            self.assertEqual(self.send(text)["state"]["phase"], "trial")
+        result = self.send("r1 и r2 на верхней\nr3 на нижней")
+        self.assertEqual(result["state"]["step_label"], "Узлы")
+        self.assertIn("Верно", result["message"]["text"])
+        self.assertNotIn("Сравни", result["message"]["text"])
+        self.assertNotIn("Смешанное", result["message"]["text"])
 
     def test_saved_opening_quiz_moves_to_first_scheme(self):
         with closing(sqlite3.connect(self.db)) as db, db:
@@ -97,13 +102,13 @@ class LessonTests(unittest.TestCase):
         self.assertEqual(current["state"]["phase"], "trial")
         self.assertFalse(current["state"]["pending"])
         self.session = current
-        self.assertEqual(self.send("Не знаю")["state"]["phase"], "compare")
+        self.assertEqual(self.send("Не знаю")["state"]["phase"], "guided")
         self.assertEqual(len(self.client.get(self.url).json()["messages"]), 4)
 
     def enter_spoken(self):
         self.enter_training()
         for case_id in ("C01", "C02"):
-            for step in STEPS:
+            for step in (STEPS[1:] if case_id == "C01" else STEPS):
                 self.send(question(CASES[case_id], step)["reference"])
 
     def test_spoken_requires_recall_and_reveals_options_only_on_request(self):
@@ -128,7 +133,6 @@ class LessonTests(unittest.TestCase):
 
     def test_diagnoses_single_common_node_and_waits_for_correction(self):
         self.enter_training()
-        self.send("R1, R2, R3")
         self.choose("R1: A–C; R2: C–B; R3: A–B")
         self.choose("R1 и R2 соединены последовательно")
         result = self.choose("R1 и R3 параллельны")
@@ -144,7 +148,7 @@ class LessonTests(unittest.TestCase):
         self.assertNotIn("Элементы —", result["message"]["text"])
         result = self.send("Полный разбор")
         self.assertIn("Элементы — R1, R2, R3", result["message"]["text"])
-        self.assertEqual(result["state"]["step_label"], "Элементы")
+        self.assertEqual(result["state"]["step_label"], "Узлы")
         result = self.send("Разговорный режим")
         self.assertTrue(result["state"]["teacher"])
         self.assertEqual(result["state"]["case_id"], "C01")
@@ -156,20 +160,20 @@ class LessonTests(unittest.TestCase):
             with self.subTest(text=text):
                 result = self.send(text)
                 self.assertEqual(result["state"], opening)
-                self.assertIn("Я помогаю разбирать соединение проводников", result["message"]["text"])
+                self.assertIn(opening["question"], result["message"]["text"])
                 self.assertIn(opening["question"], result["message"]["text"])
                 self.assertNotIn("Укажи элементы, узлы и вывод", result["message"]["text"])
         self.enter_training()
         for text in ("", "Кто выиграл чемпионат?"):
             result = self.send(text)
-            self.assertEqual(result["state"]["step_label"], "Элементы")
+            self.assertEqual(result["state"]["step_label"], "Узлы")
             self.assertNotIn("R1, R2, R3", result["message"]["text"])
 
     def test_full_lesson_scores_locked_control_and_wrong_answer(self):
         self.enter_training()
         for index in range(1, 9):
             case = CASES[f"C{index:02}"]
-            steps = STEPS if index <= 6 else ("overall",)
+            steps = STEPS[1:] if index == 1 else STEPS if index <= 6 else ("overall",)
             for step in steps:
                 if 3 <= index <= 6:
                     self.send(ACTION_NAMES[step])
@@ -218,12 +222,11 @@ class LessonTests(unittest.TestCase):
 
     def test_model_match_needs_explicit_confirmation(self):
         self.open_lesson(FixtureModel())
-        self.enter_method()
+        self.enter_model_step()
         match = self.send(
-            "Сначала перечислю элементы и их узлы, потом проверю последовательные "
-            "и параллельные участки и сделаю общий вывод."
+            "R1 и R2 включены последовательно. Нет ответвлений в узлах C."
         )
-        self.assertEqual(match["state"]["phase"], "method")
+        self.assertEqual(match["state"]["phase"], "guided")
         self.assertTrue(match["state"]["pending"])
         confirmation = self.send("Подтвердить")
         self.assertEqual(confirmation["state"]["phase"], "guided")
@@ -231,9 +234,9 @@ class LessonTests(unittest.TestCase):
     def test_incorrect_model_match_cannot_promote_unrelated_or_negative_answer(self):
         model = FixtureModel()
         self.open_lesson(model)
-        self.enter_method()
+        self.enter_model_step()
         question = self.send("Кто такой Дональд Трамп")
-        self.assertEqual(question["state"]["phase"], "method")
+        self.assertEqual(question["state"]["phase"], "guided")
         self.assertEqual(model.options, [])
         for text in (
             "Будем готовить фруктовый салат.",
@@ -243,7 +246,7 @@ class LessonTests(unittest.TestCase):
         ):
             result = self.send(text)
             self.assertFalse(result["state"]["pending"])
-            self.assertEqual(result["state"]["phase"], "method")
+            self.assertEqual(result["state"]["phase"], "guided")
 
     def test_knowledge_lookup_uses_approved_card(self):
         for text in ("Что такое узел?", "Что называется узлом"):

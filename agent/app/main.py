@@ -123,6 +123,12 @@ class Store:
                 history = [opening]
             else:
                 history.append(opening)
+        if state["phase"] in ("compare", "method"):
+            state.update(phase="guided", operation=1, pending=None, tries=0)
+            history.append({
+                "id": "continue-with-nodes", "role": "assistant",
+                "text": "Продолжим разбирать схему по шагам. Проследи провод от каждого вывода резистора до буквы узла.",
+            })
         return row["version"], state, history, existing
 
     @staticmethod

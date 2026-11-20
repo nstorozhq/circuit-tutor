@@ -28,13 +28,27 @@ def recall_matches(step, text):
     return bool(re.match(prefix + "(?:" + RECALL_VERBS[step] + r")\b", norm(text)))
 
 
-def try_answer(text):
-    value = norm(text)
-    return bool(COMPONENT.search(value) or re.search(
-        r"\b(?:резистор\w*|проводник\w*|ламп\w*|узл\w*|ветв\w*|последовательн\w*|"
-        r"параллельн\w*|смешанн\w*|не знаю|откуда (?:я |мне )?зна(?:ю|ть)|"
-        r"затрудняюсь|не получается|не могу определ\w*)\b", value
-    ))
+def branch_claims(raw):
+    text = norm(raw)
+    if re.search(ELEMENT_NEGATION, text) or re.search(UNSURE, text):
+        return {}
+    components = r"[rl][1-9]\d*(?: (?:и )?[rl][1-9]\d*)*"
+    directions = r"верх\w*|ниж\w*|сверху|снизу"
+    pattern = (
+        rf"(?P<names>{components}) (?:на )?(?P<direction>{directions})(?: вет\w*)?"
+        rf"|(?P<leading_direction>{directions})(?: вет\w*)? (?P<following_names>{components})"
+    )
+    claims = {}
+    for match in re.finditer(pattern, text):
+        direction = match["direction"] or match["leading_direction"]
+        branch = "upper" if direction.startswith(("верх", "сверху")) else "lower"
+        names = set(COMPONENT.findall(match["names"] or match["following_names"]))
+        if branch in claims and claims[branch] != names:
+            return {}
+        claims[branch] = names
+    if set(COMPONENT.findall(text)) != set().union(*claims.values()):
+        return {}
+    return claims
 
 
 def elements_match(raw, reference):
@@ -83,8 +97,6 @@ def allows_correct_suggestion(phase, task, raw):
         return all(re.search(pattern, text) for pattern in (
             r"элемент", r"узл|точк[аи] подключ", r"последовательн", r"параллельн", r"вывод",
         )) and not re.search(r"\bне\b", text)
-    if phase == "compare":
-        return True
 
     step = task["step"]
     reference = task["reference"]

@@ -33,7 +33,7 @@ class AccountsTests(unittest.TestCase):
         guest = self.browser.post("/api/sessions").json()
         path = f"/api/sessions/{guest['id']}"
         turn = {"version": 0, "message_id": "start", "text": "R1 и R2 сверху, R3 снизу."}
-        self.assertEqual(self.browser.post(path + "/turns", json=turn).json()["state"]["phase"], "compare")
+        self.assertEqual(self.browser.post(path + "/turns", json=turn).json()["state"]["phase"], "guided")
 
         registered = self.browser.post("/api/auth/register", json={**self.credentials, "guest_lesson": guest["id"]})
         self.assertEqual(registered.status_code, 201)
@@ -63,7 +63,7 @@ class AccountsTests(unittest.TestCase):
         fresh_browser = self.another_browser()
         login = fresh_browser.post("/api/auth/login", json=self.credentials)
         self.assertEqual(login.json()["lesson_id"], guest["id"])
-        self.assertEqual(fresh_browser.get(path).json()["state"]["phase"], "compare")
+        self.assertEqual(fresh_browser.get(path).json()["state"]["phase"], "guided")
         new_lesson = fresh_browser.post("/api/sessions").json()
         self.assertNotEqual(new_lesson["id"], guest["id"])
         self.assertEqual(fresh_browser.get("/api/auth").json()["lesson_id"], new_lesson["id"])
