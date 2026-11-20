@@ -1,6 +1,9 @@
 import itertools
+import json
+import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -31,7 +34,8 @@ class LessonTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
-        self.client = self.enterContext(TestClient(create_app(Path(temporary.name) / "test.sqlite3", OfflineModel())))
+        self.db = Path(temporary.name) / "test.sqlite3"
+        self.client = self.enterContext(TestClient(create_app(self.db, OfflineModel())))
         self.session = self.client.post("/api/sessions").json()
         self.url = "/api/sessions/" + self.session["id"]
         self.turn_ids = itertools.count(1)
@@ -54,6 +58,9 @@ class LessonTests(unittest.TestCase):
         self.choose("Выделить элементы, определить")
 
     def test_first_attempt_requires_relevant_answer_and_comparison(self):
+        opening = self.session["messages"][0]["text"]
+        self.assertIn("Что будем учиться делать по электрической схеме?", opening)
+        self.assertNotIn("Научимся определять", opening)
         wrong_goal = self.choose("Вычислять мощность")
         self.assertEqual(wrong_goal["state"]["phase"], "goal")
         self.assertIn("Этот вариант не подходит", wrong_goal["message"]["text"])
@@ -71,6 +78,19 @@ class LessonTests(unittest.TestCase):
         self.assertIsNotNone(result["state"]["circuit"])
         self.choose("Мой вывод или обоснование")
         self.assertEqual(self.session["state"]["phase"], "method")
+
+    def test_reopens_goal_from_before_question_change(self):
+        previous = "Какое действие мы будем тренировать с помощью этих знаний?"
+        with closing(sqlite3.connect(self.db)) as db, db:
+            state = json.loads(db.execute("SELECT state FROM sessions").fetchone()[0])
+            state["pending"] = {"key": "correct", "prompt": previous}
+            history = [{"id": "reply-legacy", "role": "assistant", "text": f"Предыдущая реплика.\n\n{previous}"}]
+            db.execute("UPDATE sessions SET state = ?, history = ?", (json.dumps(state), json.dumps(history)))
+        current = self.client.get(self.url).json()
+        self.assertIn(current["state"]["question"], current["messages"][-1]["text"])
+        self.assertNotIn(previous, current["messages"][-1]["text"])
+        self.assertTrue(current["state"]["pending"])
+        self.assertEqual(self.send("Подтвердить")["state"]["phase"], "trial")
 
     def enter_spoken(self):
         self.enter_training()

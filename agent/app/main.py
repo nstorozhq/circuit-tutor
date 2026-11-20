@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from .accounts import Accounts, Credentials, check_origin
+from .knowledge import PREVIOUS_GOAL_PROMPT
 from .model import GigaChat
 from .tutor import greeting, new_state, respond, view
 
@@ -206,7 +207,13 @@ def create_app(db_path=None, model=None):
 
     def lesson_response(session_id, user_id):
         version, state, history, _ = app.state.store.load(session_id, user_id)
-        return {"id": session_id, "version": version, "state": view(state), "messages": history,
+        current = view(state)
+        if state["phase"] == "goal":
+            latest = history[-1]
+            latest["text"] = greeting(state) if latest["id"] == "welcome" else latest["text"].replace(
+                PREVIOUS_GOAL_PROMPT, current["question"]
+            )
+        return {"id": session_id, "version": version, "state": current, "messages": history,
                 "gigachat_configured": app.state.model.enabled}
 
     @app.post("/api/sessions", status_code=201)

@@ -2,7 +2,7 @@ import re
 
 from .answers import allows_correct_suggestion, answer_key, elements_match, recall_matches, try_answer
 from .knowledge import (
-    CASES, CIRCUITS, COURSE, INTRO, STEPS, STEP_NAMES, lookup, norm, question, recall_question,
+    CASES, CIRCUITS, COURSE, INTRO, PREVIOUS_GOAL_PROMPT, STEPS, STEP_NAMES, lookup, norm, question, recall_question,
     reference_answer
 )
 
@@ -59,7 +59,12 @@ def options_hidden(state):
 
 def pending_choice(state, current):
     pending = state["pending"]
-    if isinstance(pending, dict) and pending["prompt"] == current["prompt"]:
+    if not isinstance(pending, dict):
+        return None
+    valid_prompt = pending["prompt"] == current["prompt"] or (
+        state["phase"] == "goal" and pending["prompt"] == PREVIOUS_GOAL_PROMPT
+    )
+    if valid_prompt:
         return next((item for item in current["choices"] if item["key"] == pending["key"]), None)
     return None
 
@@ -86,8 +91,7 @@ def view(state):
 
 def greeting(state):
     return (
-        "Привет! Научимся определять соединение проводников по схеме. "
-        "В последовательной цепочке между элементами нет ответвлений. "
+        "Привет! В последовательной цепочке между элементами нет ответвлений. "
         "У параллельных ветвей совпадают оба узла подключения.\n\n"
         + current_question(state)["prompt"]
     )
