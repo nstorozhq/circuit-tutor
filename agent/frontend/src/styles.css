@@ -5,7 +5,7 @@
 }
 
 .topbar {
-  max-width: 1300px;
+  max-width: 980px;
   margin: 0 auto;
   padding: 24px clamp(16px, 4vw, 40px) 20px;
   display: flex;
@@ -14,10 +14,9 @@
   flex-wrap: wrap;
   gap: 12px;
 }
-.workspace { max-width: 1300px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 32px; }
-.lesson-grid { display: grid; grid-template-columns: minmax(300px, 4fr) minmax(0, 6fr); gap: 16px; align-items: start; }
-.scheme-panel { padding: 20px; }
-.drawing { background-color: #f6f7f6; margin: 12px 0; }
+.workspace { max-width: 980px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 16px; }
+.lesson-controls { margin-top: 12px; }
+.drawing { background-color: var(--paper); border-radius: 4px; max-width: 390px; margin: 8px 0; }
 .circuit { width: 100%; display: block; }
 .wire { stroke: #235c4a; stroke-width: 2; stroke-linecap: round; }
 .component { fill: var(--paper); stroke: #235c4a; stroke-width: 2; }
@@ -25,18 +24,16 @@
 .junction { fill: #235c4a; }
 .unknown { fill: #a44e23; }
 .chat-panel {
-  height: clamp(520px, calc(100dvh - 115px), 800px);
+  height: clamp(480px, calc(100dvh - 100px), 940px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 .chat-panel > :last-child { flex: 1; }
-.score-list { list-style: none; padding: 0; display: grid; gap: 5px; }
-.score-list li { display: flex; justify-content: space-between; background: #f1f5ee; padding: 6px 10px; border-radius: 6px; }
 .screen-note { padding: 32px; }
-@media (max-width: 720px) {
-  .lesson-grid { grid-template-columns: minmax(0, 1fr); }
-  .scheme-panel { padding: 15px; }
-  .drawing { max-width: 400px; }
-  .chat-panel { height: 590px; }
+@media (max-width: 520px) {
+  .topbar { padding: 16px 12px 12px; }
+  .topbar h1 { font-size: 1.25rem; }
+  .workspace { padding-inline: 8px; }
+  .chat-panel { height: clamp(470px, calc(100dvh - 110px), 760px); }
 }

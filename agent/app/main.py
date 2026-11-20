@@ -6,11 +6,14 @@ from pathlib import Path
 from uuid import uuid4
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
+from .accounts import Accounts, Credentials, check_origin
 from .model import GigaChat
 from .tutor import greeting, new_state, respond, view
 
@@ -40,6 +43,24 @@ class Store:
                     message_id TEXT NOT NULL, result TEXT NOT NULL,
                     PRIMARY KEY (session_id, message_id)
                 );
+                CREATE TABLE IF NOT EXISTS accounts (
+                    id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE,
+                    salt BLOB NOT NULL, password_hash BLOB NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS account_tokens (
+                    digest BLOB NOT NULL PRIMARY KEY,
+                    account_id INTEGER NOT NULL REFERENCES accounts(id),
+                    expires_at INTEGER NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS lesson_owners (
+                    session_id TEXT NOT NULL PRIMARY KEY REFERENCES sessions(id),
+                    account_id INTEGER NOT NULL REFERENCES accounts(id)
+                );
+                CREATE INDEX IF NOT EXISTS lesson_owners_by_account ON lesson_owners(account_id);
+                CREATE TABLE IF NOT EXISTS auth_limits (
+                    key TEXT NOT NULL PRIMARY KEY,
+                    expires_at INTEGER NOT NULL, attempts INTEGER NOT NULL
+                );
             """)
 
     def connect(self):
@@ -48,20 +69,50 @@ class Store:
         db.row_factory = sqlite3.Row
         return db
 
-    def create(self):
+    def create(self, account_id):
         session_id = uuid4().hex
         state = new_state()
         history = [{"id": "welcome", "role": "assistant", "text": greeting(state)}]
         with closing(self.connect()) as db, db:
             db.execute("INSERT INTO sessions VALUES (?, 0, ?, ?)",
                        (session_id, json.dumps(state), json.dumps(history)))
+            if account_id is not None:
+                db.execute("INSERT INTO lesson_owners VALUES (?, ?)", (session_id, account_id))
         return session_id
 
-    def load(self, session_id, message_id=None):
+    def latest_lesson(self, account_id, guest_lesson=None):
+        with closing(self.connect()) as db, db:
+            if guest_lesson:
+                db.execute("BEGIN IMMEDIATE")
+            found = db.execute("""
+                SELECT s.id FROM lesson_owners o JOIN sessions s ON s.id = o.session_id
+                WHERE o.account_id = ? ORDER BY s.rowid DESC LIMIT 1
+                """, (account_id,)).fetchone()
+            if found:
+                return found["id"]
+            if guest_lesson:
+                claimed = db.execute("""
+                    INSERT OR IGNORE INTO lesson_owners
+                    SELECT id, ? FROM sessions WHERE id = ?
+                    """, (account_id, guest_lesson))
+                if claimed.rowcount:
+                    return guest_lesson
+        return None
+
+    @staticmethod
+    def accessible_lesson(db, session_id, account_id):
+        row = db.execute("""
+            SELECT s.version, s.state, s.history
+            FROM sessions s LEFT JOIN lesson_owners o ON o.session_id = s.id
+            WHERE s.id = ? AND (o.account_id IS NULL OR o.account_id = ?)
+            """, (session_id, account_id)).fetchone()
+        if not row:
+            raise HTTPException(404, "Урок не найден.")
+        return row
+
+    def load(self, session_id, account_id, message_id=None):
         with closing(self.connect()) as db:
-            row = db.execute("SELECT * FROM sessions WHERE id = ?", (session_id,)).fetchone()
-            if not row:
-                raise HTTPException(404, "Урок не найден.")
+            row = self.accessible_lesson(db, session_id, account_id)
             existing = self.previous(db, session_id, message_id) if message_id else None
             return row["version"], json.loads(row["state"]), json.loads(row["history"]), existing
 
@@ -71,9 +122,10 @@ class Store:
                          (session_id, message_id)).fetchone()
         return json.loads(row["result"]) if row else None
 
-    def commit(self, session_id, turn, state, history, result):
+    def commit(self, session_id, account_id, turn, state, history, result):
         with closing(self.connect()) as db, db:
             db.execute("BEGIN IMMEDIATE")
+            self.accessible_lesson(db, session_id, account_id)
             existing = self.previous(db, session_id, turn.message_id)
             if existing:
                 return existing
@@ -92,28 +144,86 @@ def create_app(db_path=None, model=None):
     @asynccontextmanager
     async def lifespan(app):
         app.state.store = Store(db_path or os.getenv("TUTOR_DB", str(ROOT / "tutor.sqlite3")))
+        app.state.accounts = Accounts(app.state.store.connect)
         app.state.model = model if model is not None else GigaChat()
         yield
 
     app = FastAPI(title="Цепь · учебный помощник", version="1.0.0", lifespan=lifespan)
 
+    @app.middleware("http")
+    async def prevent_private_caching(request: Request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith("/api/"):
+            response.headers["Cache-Control"] = "no-store"
+        return response
+
+    @app.exception_handler(RequestValidationError)
+    async def invalid_input(request: Request, error: RequestValidationError):
+        if request.url.path.startswith("/api/auth/"):
+            return JSONResponse({"detail": "Проверь логин и пароль."}, status_code=422)
+        return await request_validation_exception_handler(request, error)
+
+    def profile(user, guest_lesson=None):
+        if user is None:
+            return {"user": None, "lesson_id": None}
+        return {
+            "user": user["username"],
+            "lesson_id": app.state.store.latest_lesson(user["id"], guest_lesson),
+        }
+
+    def start_account(request, response, credentials, register):
+        check_origin(request)
+        user = app.state.accounts.authenticate(request, credentials, register)
+        result = profile(user, credentials.guest_lesson)
+        app.state.accounts.start(request, response, user["id"])
+        return result
+
+    def account_id(request):
+        user = app.state.accounts.current(request)
+        return user["id"] if user else None
+
     @app.get("/api/health")
     def health():
         return {"ok": True, "gigachat_configured": app.state.model.enabled}
 
-    @app.post("/api/sessions", status_code=201)
-    def create_session():
-        return read_session(app.state.store.create())
+    @app.get("/api/auth")
+    def current_account(request: Request):
+        return profile(app.state.accounts.current(request))
 
-    @app.get("/api/sessions/{session_id}")
-    def read_session(session_id: str):
-        version, state, history, _ = app.state.store.load(session_id)
+    @app.post("/api/auth/register", status_code=201)
+    def register(request: Request, response: Response, credentials: Credentials):
+        return start_account(request, response, credentials, register=True)
+
+    @app.post("/api/auth/login")
+    def login(request: Request, response: Response, credentials: Credentials):
+        return start_account(request, response, credentials, register=False)
+
+    @app.post("/api/auth/logout")
+    def logout(request: Request, response: Response):
+        check_origin(request)
+        app.state.accounts.end(request, response)
+        return profile(None)
+
+    def lesson_response(session_id, user_id):
+        version, state, history, _ = app.state.store.load(session_id, user_id)
         return {"id": session_id, "version": version, "state": view(state), "messages": history,
                 "gigachat_configured": app.state.model.enabled}
 
+    @app.post("/api/sessions", status_code=201)
+    def create_session(request: Request):
+        check_origin(request)
+        user_id = account_id(request)
+        return lesson_response(app.state.store.create(user_id), user_id)
+
+    @app.get("/api/sessions/{session_id}")
+    def read_session(session_id: str, request: Request):
+        return lesson_response(session_id, account_id(request))
+
     @app.post("/api/sessions/{session_id}/turns")
-    async def send(session_id: str, turn: Turn):
-        version, state, history, existing = app.state.store.load(session_id, turn.message_id)
+    async def send(session_id: str, turn: Turn, request: Request):
+        check_origin(request)
+        user_id = account_id(request)
+        version, state, history, existing = app.state.store.load(session_id, user_id, turn.message_id)
         if existing:
             return existing
         if version != turn.version:
@@ -124,7 +234,7 @@ def create_app(db_path=None, model=None):
         message = {"id": "reply-" + turn.message_id, "role": "assistant", "text": reply}
         history.extend([{"id": turn.message_id, "role": "user", "text": turn.text}, message])
         result = {"version": version + 1, "state": view(state), "message": message}
-        return app.state.store.commit(session_id, turn, state, history, result)
+        return app.state.store.commit(session_id, user_id, turn, state, history, result)
 
     if (DIST / "assets").is_dir():
         app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
