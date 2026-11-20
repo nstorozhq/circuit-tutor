@@ -32,10 +32,13 @@ class FixtureModel:
 
 class LessonTests(unittest.TestCase):
     def setUp(self):
+        self.open_lesson(OfflineModel())
+
+    def open_lesson(self, model):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.db = Path(temporary.name) / "test.sqlite3"
-        self.client = self.enterContext(TestClient(create_app(self.db, OfflineModel())))
+        self.client = self.enterContext(TestClient(create_app(self.db, model)))
         self.session = self.client.post("/api/sessions").json()
         self.url = "/api/sessions/" + self.session["id"]
         self.turn_ids = itertools.count(1)
@@ -51,52 +54,51 @@ class LessonTests(unittest.TestCase):
     def choose(self, start):
         return self.send(next(choice for choice in self.session["state"]["choices"] if choice.startswith(start)))
 
-    def enter_training(self):
-        self.choose("Определять способ")
+    def enter_method(self):
         self.send("Я вижу три резистора и разные ветви.")
         self.choose("Мой вывод или обоснование")
+
+    def enter_training(self):
+        self.enter_method()
         self.choose("Выделить элементы, определить")
 
     def test_first_attempt_requires_relevant_answer_and_comparison(self):
         opening = self.session["messages"][0]["text"]
         self.assertTrue(opening.startswith("Привет! Я твой помощник по физике."))
         self.assertIn("напиши «подсказка»", opening)
-        self.assertIn("Что будем учиться делать по электрической схеме?", opening)
-        self.assertNotIn("нет ответвлений", opening)
-        hint = self.send("подсказка")
-        self.assertEqual(hint["state"]["phase"], "goal")
-        self.assertIn("к каким точкам подключён каждый элемент", hint["message"]["text"])
-        wrong_goal = self.choose("Вычислять мощность")
-        self.assertEqual(wrong_goal["state"]["phase"], "goal")
-        self.assertIn("Этот вариант не подходит", wrong_goal["message"]["text"])
-        self.assertIn("Для вычисления мощности нужны числовые данные", wrong_goal["message"]["text"])
-        self.assertIn("Выбери другой вариант", wrong_goal["message"]["text"])
-        self.choose("Определять способ")
+        self.assertIn("научимся находить последовательные и параллельные участки", opening)
+        self.assertIn("Какие резисторы на верхней ветви, а какие на нижней?", opening)
         self.assertEqual(self.session["state"]["phase"], "trial")
+        self.assertEqual(self.session["state"]["choices"], [])
         self.assertIsNotNone(self.session["state"]["circuit"])
-        self.assertIn("нет ответвлений", self.session["message"]["text"])
+        hint = self.send("подсказка")
+        self.assertEqual(hint["state"]["phase"], "trial")
+        self.assertIn("От A проследи верхний провод", hint["message"]["text"])
         result = self.send("На схеме фруктовый салат.")
         self.assertEqual(result["state"]["phase"], "trial")
-        result = self.send("Думаю, все три резистора последовательны.")
+        result = self.send("Я то откуда знаю)")
         self.assertEqual(result["state"]["phase"], "compare")
         self.assertIn("Ответ учителя", result["message"]["text"])
+        self.assertIn("Верхняя ветвь — R1–R2, нижняя — R3", result["message"]["text"])
         self.assertIn("Смешанное", result["message"]["text"])
         self.assertIsNotNone(result["state"]["circuit"])
         self.choose("Мой вывод или обоснование")
         self.assertEqual(self.session["state"]["phase"], "method")
 
-    def test_reopens_goal_from_before_question_change(self):
-        previous = "Какое действие мы будем тренировать с помощью этих знаний?"
+    def test_saved_opening_quiz_moves_to_first_scheme(self):
         with closing(sqlite3.connect(self.db)) as db, db:
             state = json.loads(db.execute("SELECT state FROM sessions").fetchone()[0])
-            state["pending"] = {"key": "correct", "prompt": previous}
-            history = [{"id": "reply-legacy", "role": "assistant", "text": f"Предыдущая реплика.\n\n{previous}"}]
-            db.execute("UPDATE sessions SET state = ?, history = ?", (json.dumps(state), json.dumps(history)))
+            state.update(phase="goal", pending={"key": "correct", "prompt": "Что будем учиться делать?"})
+            history = [{"id": "reply-legacy", "role": "assistant", "text": "Реплика из сохранённого урока."}]
+            db.execute("UPDATE sessions SET version = 1, state = ?, history = ?", (json.dumps(state), json.dumps(history)))
         current = self.client.get(self.url).json()
         self.assertIn(current["state"]["question"], current["messages"][-1]["text"])
-        self.assertNotIn(previous, current["messages"][-1]["text"])
-        self.assertTrue(current["state"]["pending"])
-        self.assertEqual(self.send("Подтвердить")["state"]["phase"], "trial")
+        self.assertEqual(current["messages"][0]["text"], history[0]["text"])
+        self.assertEqual(current["state"]["phase"], "trial")
+        self.assertFalse(current["state"]["pending"])
+        self.session = current
+        self.assertEqual(self.send("Не знаю")["state"]["phase"], "compare")
+        self.assertEqual(len(self.client.get(self.url).json()["messages"]), 4)
 
     def enter_spoken(self):
         self.enter_training()
@@ -202,7 +204,7 @@ class LessonTests(unittest.TestCase):
             self.assertIn(f"второй вывод {hidden} скрыт", question(data, "overall")["reference"])
 
     def test_history_idempotency_version_and_session_isolation(self):
-        payload = {"message_id": "stable", "version": 0, "text": "вариант 4"}
+        payload = {"message_id": "stable", "version": 0, "text": "R1 и R2 сверху, R3 снизу."}
         original = self.client.post(self.url + "/turns", json=payload)
         repeated = self.client.post(self.url + "/turns", json=payload)
         self.assertEqual(original.json(), repeated.json())
@@ -211,45 +213,40 @@ class LessonTests(unittest.TestCase):
         saved = self.client.get(self.url).json()
         self.assertEqual(len(saved["messages"]), 3)
         second = self.client.post("/api/sessions").json()
-        self.assertEqual(second["state"]["phase"], "goal")
+        self.assertEqual(second["state"]["phase"], "trial")
         self.assertNotEqual(second["id"], saved["id"])
 
     def test_model_match_needs_explicit_confirmation(self):
-        with tempfile.TemporaryDirectory() as folder:
-            model = FixtureModel()
-            with TestClient(create_app(Path(folder) / "test.sqlite3", model)) as client:
-                session = client.post("/api/sessions").json()
-                url = f"/api/sessions/{session['id']}/turns"
-                match = client.post(url, json={"version": 0, "message_id": "free", "text": "Научимся читать схемы."}).json()
-                self.assertEqual(match["state"]["phase"], "goal")
-                self.assertTrue(match["state"]["pending"])
-                confirmation = client.post(url, json={"version": 1, "message_id": "confirm", "text": "Подтвердить"}).json()
-                self.assertEqual(confirmation["state"]["phase"], "trial")
+        self.open_lesson(FixtureModel())
+        self.enter_method()
+        match = self.send(
+            "Сначала перечислю элементы и их узлы, потом проверю последовательные "
+            "и параллельные участки и сделаю общий вывод."
+        )
+        self.assertEqual(match["state"]["phase"], "method")
+        self.assertTrue(match["state"]["pending"])
+        confirmation = self.send("Подтвердить")
+        self.assertEqual(confirmation["state"]["phase"], "guided")
 
     def test_incorrect_model_match_cannot_promote_unrelated_or_negative_answer(self):
-        with tempfile.TemporaryDirectory() as folder:
-            model = FixtureModel()
-            with TestClient(create_app(Path(folder) / "test.sqlite3", model)) as client:
-                session = client.post("/api/sessions").json()
-                url = f"/api/sessions/{session['id']}/turns"
-                texts = (
-                    "Кто такой Дональд Трамп",
-                    "Будем готовить фруктовый салат.",
-                    "Мы не будем определять вид соединения проводников, будем измерять температуру.",
-                    "Схема.",
-                    "Подтвердить",
-                )
-                for version, text in enumerate(texts):
-                    result = client.post(url, json={
-                        "version": version, "message_id": f"blocked-{version}", "text": text,
-                    }).json()
-                    self.assertFalse(result["state"]["pending"])
-                    self.assertEqual(result["state"]["phase"], "goal")
-                    if version == 0:
-                        self.assertEqual(model.options, [])
+        model = FixtureModel()
+        self.open_lesson(model)
+        self.enter_method()
+        question = self.send("Кто такой Дональд Трамп")
+        self.assertEqual(question["state"]["phase"], "method")
+        self.assertEqual(model.options, [])
+        for text in (
+            "Будем готовить фруктовый салат.",
+            "Не будем проверять элементы, узлы, последовательные и параллельные участки и вывод.",
+            "Схема.",
+            "Подтвердить",
+        ):
+            result = self.send(text)
+            self.assertFalse(result["state"]["pending"])
+            self.assertEqual(result["state"]["phase"], "method")
 
     def test_knowledge_lookup_uses_approved_card(self):
         for text in ("Что такое узел?", "Что называется узлом"):
             result = self.send(text)
             self.assertIn("непрерывным проводом", result["message"]["text"])
-            self.assertEqual(result["state"]["phase"], "goal")
+            self.assertEqual(result["state"]["phase"], "trial")

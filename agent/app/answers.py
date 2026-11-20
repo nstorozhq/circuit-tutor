@@ -32,7 +32,8 @@ def try_answer(text):
     value = norm(text)
     return bool(COMPONENT.search(value) or re.search(
         r"\b(?:резистор\w*|проводник\w*|ламп\w*|узл\w*|ветв\w*|последовательн\w*|"
-        r"параллельн\w*|смешанн\w*|не знаю|затрудняюсь|не могу определ\w*)\b", value
+        r"параллельн\w*|смешанн\w*|не знаю|откуда (?:я |мне )?зна(?:ю|ть)|"
+        r"затрудняюсь|не получается|не могу определ\w*)\b", value
     ))
 
 
@@ -78,12 +79,6 @@ def allows_correct_suggestion(phase, task, raw):
     text = norm(raw)
     if re.search(UNSURE, text):
         return False
-    if phase == "goal":
-        return bool(
-            re.search(r"\b(?:соединени\w*|соединен\w*|читать|разбира\w*)\b", text)
-            and re.search(r"\b(?:схем\w*|проводник\w*|элемент\w*|электрическ\w*)\b", text)
-            and not re.search(r"\bне\b|\b(?:температур\w*|мощност\w*)\b", text)
-        )
     if phase == "method":
         return all(re.search(pattern, text) for pattern in (
             r"элемент", r"узл|точк[аи] подключ", r"последовательн", r"параллельн", r"вывод",

@@ -14,7 +14,6 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from .accounts import Accounts, Credentials, check_origin
-from .knowledge import PREVIOUS_GOAL_PROMPT
 from .model import GigaChat
 from .tutor import greeting, new_state, respond, view
 
@@ -115,7 +114,16 @@ class Store:
         with closing(self.connect()) as db:
             row = self.accessible_lesson(db, session_id, account_id)
             existing = self.previous(db, session_id, message_id) if message_id else None
-            return row["version"], json.loads(row["state"]), json.loads(row["history"]), existing
+        state = json.loads(row["state"])
+        history = json.loads(row["history"])
+        if state["phase"] == "goal":
+            state.update(phase="trial", tries=0, pending=None)
+            opening = {"id": "first-observation", "role": "assistant", "text": greeting(state)}
+            if row["version"] == 0:
+                history = [opening]
+            else:
+                history.append(opening)
+        return row["version"], state, history, existing
 
     @staticmethod
     def previous(db, session_id, message_id):
@@ -207,13 +215,7 @@ def create_app(db_path=None, model=None):
 
     def lesson_response(session_id, user_id):
         version, state, history, _ = app.state.store.load(session_id, user_id)
-        current = view(state)
-        if state["phase"] == "goal":
-            latest = history[-1]
-            latest["text"] = greeting(state) if latest["id"] == "welcome" else latest["text"].replace(
-                PREVIOUS_GOAL_PROMPT, current["question"]
-            )
-        return {"id": session_id, "version": version, "state": current, "messages": history,
+        return {"id": session_id, "version": version, "state": view(state), "messages": history,
                 "gigachat_configured": app.state.model.enabled}
 
     @app.post("/api/sessions", status_code=201)

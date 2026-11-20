@@ -2,12 +2,12 @@ import re
 
 from .answers import allows_correct_suggestion, answer_key, elements_match, recall_matches, try_answer
 from .knowledge import (
-    CASES, CIRCUITS, COURSE, INTRO, PREVIOUS_GOAL_PROMPT, STEPS, STEP_NAMES, lookup, norm, question, recall_question,
+    CASES, CIRCUITS, COURSE, INTRO, STEPS, STEP_NAMES, lookup, norm, question, recall_question,
     reference_answer
 )
 
 PHASES = {
-    "goal": "Цель", "trial": "Первая попытка", "compare": "Сравнение", "method": "Способ решения",
+    "trial": "Первая попытка", "compare": "Сравнение", "method": "Способ решения",
     "guided": "Разбор с помощью", "spoken": "Проговаривание", "solo": "Самостоятельно",
     "test": "Контрольная", "done": "Результат",
 }
@@ -26,7 +26,7 @@ TOPIC_GUIDANCE = "Я помогаю разбирать соединение пр
 
 def new_state():
     return {
-        "phase": "goal", "index": 0, "operation": 0, "tries": 0, "teacher": False,
+        "phase": "trial", "index": 0, "operation": 0, "tries": 0, "teacher": False,
         "assisted": False, "revealed": False, "pending": None, "results": [], "errors": {},
         "case_correct": 0, "scores": {}, "reserve": None, "spoken_named": False, "show_options": False,
     }
@@ -40,8 +40,6 @@ def current_question(state):
     phase = state["phase"]
     if phase in INTRO:
         return INTRO[phase]
-    if phase == "trial":
-        return {"prompt": "Попробуй описать соединение элементов на схеме. Здесь важна первая попытка.", "choices": []}
     if phase == "done":
         return {"prompt": "Урок завершён. Можно разобрать контрольную или открыть резервную схему командой «Резерв».", "choices": []}
     case = active_case(state)
@@ -60,19 +58,14 @@ def options_hidden(state):
 
 def pending_choice(state, current):
     pending = state["pending"]
-    if not isinstance(pending, dict):
-        return None
-    valid_prompt = pending["prompt"] == current["prompt"] or (
-        state["phase"] == "goal" and pending["prompt"] == PREVIOUS_GOAL_PROMPT
-    )
-    if valid_prompt:
+    if isinstance(pending, dict) and pending["prompt"] == current["prompt"]:
         return next((item for item in current["choices"] if item["key"] == pending["key"]), None)
     return None
 
 
 def view(state):
     phase = state["phase"]
-    case = active_case(state) if phase not in ("goal", "method") else None
+    case = active_case(state) if phase != "method" else None
     shape = CIRCUITS[case["id"]] if case else None
     current = current_question(state)
     confirming = pending_choice(state, current) is not None
@@ -92,7 +85,8 @@ def view(state):
 
 def greeting(state):
     return (
-        "Привет! Я твой помощник по физике. Сегодня разбираем соединение проводников.\n\n"
+        "Привет! Я твой помощник по физике. На этом уроке научимся находить "
+        "последовательные и параллельные участки на электрической схеме.\n\n"
         "Я буду задавать вопросы. Пиши ответы в чате или выбирай готовый вариант. "
         "Можно спросить, что такое узел. Если застрянешь, напиши «подсказка».\n\n"
         + current_question(state)["prompt"]
@@ -149,7 +143,7 @@ def grade(state, selected):
         state["phase"] = "method"
         note = {
             "same": "Вывод совпал. Теперь сформулируй способ, которым можно его обосновать.",
-            "different": "Разберём расхождение: один общий узел ещё не делает ветви параллельными.",
+            "different": "Разберём, как проверить ответ по схеме. Начнём с элементов и точек, к которым они подключены.",
             "unclear": "Начни с двух выводов каждого элемента. Дальше проверим способ по шагам.",
         }[selected["key"]]
         return with_prompt(state, note)
@@ -174,22 +168,12 @@ def grade(state, selected):
             state["assisted"] = True
         if phase == "solo":
             return with_prompt(state, "В этом выводе есть ошибка или ему не хватает основания. " + current["hints"][0])
-        if phase == "goal":
-            return with_prompt(state, f"Этот вариант не подходит. {selected['feedback']} Выбери другой вариант.")
         feedback = selected["feedback"]
         if state["tries"] >= 2 and "hints" in current:
             feedback = current["hints"][-1]
         return with_prompt(state, feedback)
 
     state["tries"] = 0
-    if phase == "goal":
-        state["phase"] = "trial"
-        return with_prompt(
-            state,
-            "Верно. Переходим к первой схеме.\n\n"
-            "В последовательной цепочке между элементами нет ответвлений. "
-            "У параллельных ветвей совпадают оба узла подключения.",
-        )
     if phase == "method":
         return with_prompt(state, start_case(state))
     if phase == "spoken":
@@ -241,8 +225,6 @@ def help_reply(state, text):
             return with_prompt(state, TOPIC_GUIDANCE + " Можешь спросить об узлах, последовательном или параллельном соединении.")
         return "\n\n".join(f"**{item['title']}.** {item['text']}" for item in matches)
     if action == "hint":
-        if state["phase"] == "goal":
-            return with_prompt(state, "По схеме видно, к каким точкам подключён каждый элемент. Выбери задачу, где это пригодится.")
         hints = current_question(state).get("hints")
         if not hints:
             return with_prompt(state, "Попробуй выделить элементы и проследить их выводы.")
@@ -274,9 +256,15 @@ async def respond(state, text, model):
         return with_prompt(state, "Напиши ответ на текущий вопрос.")
     if phase == "trial":
         if not try_answer(text):
-            return with_prompt(state, "Опиши элементы или связи на схеме. Если пока не получается, так и напиши.")
+            return with_prompt(state, TOPIC_GUIDANCE)
         state["phase"] = "compare"
-        return with_prompt(state, "Ответ учителя:\n\n" + reference_answer(active_case(state)))
+        case = active_case(state)
+        branches, _ = CIRCUITS[case["id"]].parallel[0]
+        upper, lower = (branch.strip("()") for branch in branches)
+        return with_prompt(
+            state,
+            f"Ответ учителя:\n\nВерхняя ветвь — {upper}, нижняя — {lower}.\n\n" + reference_answer(case),
+        )
 
     current = current_question(state)
     choices = current["choices"]
