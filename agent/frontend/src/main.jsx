@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import {
   Alert, Box, Button, Collapse, CssBaseline, Dialog, DialogActions, DialogContent, DialogTitle,
   Divider, FormControl, FormControlLabel, Paper, Radio, RadioGroup, Stack, TextField, ThemeProvider,
-  ToggleButton, Typography, createTheme,
+  Typography, createTheme,
 } from '@mui/material';
 import { ChatBox, ChatMessageContent } from '@mui/x-chat';
 import { useChat, useMessageContext } from '@mui/x-chat/headless';
@@ -126,7 +126,7 @@ function AnswerForm({ choices, question, independent, busy, send }) {
 function ChatActions({ state }) {
   const { sendMessage, isStreaming } = useChat();
   const send = (text) => void sendMessage({ parts: [{ type: 'text', text }] }).catch(() => {});
-  const inTest = state.phase === 'test';
+  const hasReviewActions = state.phase !== 'test' && state.case_id;
   return (
     <>
       {state.pending && (
@@ -146,23 +146,18 @@ function ChatActions({ state }) {
           Показать варианты
         </Button>
       )}
-      <Divider sx={{ my: 1.5 }} />
-      <Stack direction="row" flexWrap="wrap" useFlexGap spacing={0.5}>
-        {!inTest && state.phase !== 'done' && (
-          <Button size="small" disabled={isStreaming} onClick={() => send('Подсказка')}>Подсказка</Button>
-        )}
-        {!inTest && state.case_id && <>
-          <Button size="small" disabled={isStreaming} onClick={() => send('Покажи ответ')}>Эталон</Button>
-          <Button size="small" disabled={isStreaming} onClick={() => send('Полный разбор')}>Полный разбор</Button>
-        </>}
-        {state.phase === 'done' && (
-          <Button size="small" disabled={isStreaming} onClick={() => send('Резерв')}>Резервная схема</Button>
-        )}
-        <ToggleButton value="teacher" size="small" color="primary" selected={state.teacher} disabled={isStreaming}
-          onClick={() => send(state.teacher ? 'Краткий режим' : 'Режим учителя')}>
-          Режим учителя
-        </ToggleButton>
-      </Stack>
+      {hasReviewActions && (
+        <>
+          <Divider sx={{ my: 1.5 }} />
+          <Stack direction="row" flexWrap="wrap" useFlexGap spacing={0.5}>
+            <Button size="small" disabled={isStreaming} onClick={() => send('Покажи ответ')}>Эталон</Button>
+            <Button size="small" disabled={isStreaming} onClick={() => send('Полный разбор')}>Полный разбор</Button>
+            {state.phase === 'done' && (
+              <Button size="small" disabled={isStreaming} onClick={() => send('Резерв')}>Резервная схема</Button>
+            )}
+          </Stack>
+        </>
+      )}
     </>
   );
 }

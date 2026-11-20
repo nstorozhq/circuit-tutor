@@ -59,8 +59,13 @@ class LessonTests(unittest.TestCase):
 
     def test_first_attempt_requires_relevant_answer_and_comparison(self):
         opening = self.session["messages"][0]["text"]
+        self.assertTrue(opening.startswith("Привет! Я твой помощник по физике."))
+        self.assertIn("напиши «подсказка»", opening)
         self.assertIn("Что будем учиться делать по электрической схеме?", opening)
-        self.assertNotIn("Научимся определять", opening)
+        self.assertNotIn("нет ответвлений", opening)
+        hint = self.send("подсказка")
+        self.assertEqual(hint["state"]["phase"], "goal")
+        self.assertIn("к каким точкам подключён каждый элемент", hint["message"]["text"])
         wrong_goal = self.choose("Вычислять мощность")
         self.assertEqual(wrong_goal["state"]["phase"], "goal")
         self.assertIn("Этот вариант не подходит", wrong_goal["message"]["text"])
@@ -69,6 +74,7 @@ class LessonTests(unittest.TestCase):
         self.choose("Определять способ")
         self.assertEqual(self.session["state"]["phase"], "trial")
         self.assertIsNotNone(self.session["state"]["circuit"])
+        self.assertIn("нет ответвлений", self.session["message"]["text"])
         result = self.send("На схеме фруктовый салат.")
         self.assertEqual(result["state"]["phase"], "trial")
         result = self.send("Думаю, все три резистора последовательны.")
@@ -137,9 +143,10 @@ class LessonTests(unittest.TestCase):
         result = self.send("Полный разбор")
         self.assertIn("Элементы — R1, R2, R3", result["message"]["text"])
         self.assertEqual(result["state"]["step_label"], "Элементы")
-        result = self.send("Режим учителя")
+        result = self.send("Разговорный режим")
         self.assertTrue(result["state"]["teacher"])
         self.assertEqual(result["state"]["case_id"], "C01")
+        self.assertFalse(self.send("Краткий режим")["state"]["teacher"])
 
     def test_empty_and_off_topic_stay_on_step(self):
         opening = self.session["state"]

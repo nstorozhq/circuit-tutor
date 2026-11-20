@@ -13,7 +13,8 @@ PHASES = {
 }
 ACTIONS = {
     "подсказка": "hint", "покажи ответ": "reference", "полный разбор": "walkthrough",
-    "режим учителя": "teacher", "краткий режим": "teacher", "показать варианты": "options",
+    "разговорный режим": "teacher", "режим учителя": "teacher", "краткий режим": "teacher",
+    "показать варианты": "options",
 }
 QUESTION_START = re.compile(
     r"^(?:а )?(?:кто|где|когда|зачем|почему|сколько|"
@@ -91,8 +92,9 @@ def view(state):
 
 def greeting(state):
     return (
-        "Привет! В последовательной цепочке между элементами нет ответвлений. "
-        "У параллельных ветвей совпадают оба узла подключения.\n\n"
+        "Привет! Я твой помощник по физике. Сегодня разбираем соединение проводников.\n\n"
+        "Я буду задавать вопросы. Пиши ответы в чате или выбирай готовый вариант. "
+        "Можно спросить, что такое узел. Если застрянешь, напиши «подсказка».\n\n"
         + current_question(state)["prompt"]
     )
 
@@ -182,7 +184,12 @@ def grade(state, selected):
     state["tries"] = 0
     if phase == "goal":
         state["phase"] = "trial"
-        return with_prompt(state, "Верно. Переходим к первой схеме.")
+        return with_prompt(
+            state,
+            "Верно. Переходим к первой схеме.\n\n"
+            "В последовательной цепочке между элементами нет ответвлений. "
+            "У параллельных ветвей совпадают оба узла подключения.",
+        )
     if phase == "method":
         return with_prompt(state, start_case(state))
     if phase == "spoken":
@@ -209,7 +216,7 @@ def help_reply(state, text):
         state["reserve"] = f"C{reserve[1]}" if reserve[1] else ("C12" if state["reserve"] == "C11" else "C11")
         return "Резервная схема открыта. Попробуй самостоятельно объяснить связи, затем запроси «Полный разбор»."
     if action == "teacher":
-        state["teacher"] = request == "режим учителя"
+        state["teacher"] = request != "краткий режим"
         return with_prompt(state, "Объясняю в разговорном стиле." if state["teacher"] else "Перехожу к кратким формулировкам.")
     if action == "options" and state["phase"] == "spoken":
         state.update(assisted=True, show_options=True)
@@ -234,6 +241,8 @@ def help_reply(state, text):
             return with_prompt(state, TOPIC_GUIDANCE + " Можешь спросить об узлах, последовательном или параллельном соединении.")
         return "\n\n".join(f"**{item['title']}.** {item['text']}" for item in matches)
     if action == "hint":
+        if state["phase"] == "goal":
+            return with_prompt(state, "По схеме видно, к каким точкам подключён каждый элемент. Выбери задачу, где это пригодится.")
         hints = current_question(state).get("hints")
         if not hints:
             return with_prompt(state, "Попробуй выделить элементы и проследить их выводы.")
