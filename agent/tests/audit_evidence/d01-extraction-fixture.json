@@ -1,0 +1,69 @@
+{
+  "origin": "followup_results_release_2026-11-23.json / D01",
+  "origin_source_hashes": {
+    "accounts.py": "ae5a8d382b2543f26d651155f8f77b4866702c6cf63b5b934014ab3d583d0b69",
+    "claims.py": "898928eb24c3e84a3a78768315168c3a1a1874d3ca7af1455b58c6d708d617c9",
+    "__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "model.py": "b15478128d4c100fe00be0b0288bf7904f3a2917b05bc5cd1328e0754206da55",
+    "answers.py": "034f9a56f9a0277aca64cd1c426289714cf542a4fffd1b042df2827b153aecc1",
+    "rag.py": "af050c9aca91190152844006fbde4186e0d5003c37e8f5163a532f1df2a83137",
+    "main.py": "199b474be4a8be6a454b35ff00fdd89006a4bcc8ea5da4d687c86c768b7326a6",
+    "knowledge.py": "de6ae7e52f05ec1843cd3b91cfd27e8333152aefe4fe25c00111b244bdea6fe3",
+    "tutor.py": "a30ad987c57544475b8cfe779ea494983c3d3be39017cbc27e17464dd9ea0939",
+    "knowledge_base/lesson.json": "f1633b284a7412e525b41f44a4b2e4fe2159cbe32399d304661f527fa49db9e8"
+  },
+  "text": "R1: C–A; R2: B–C; R3: B–A. А буква R обозначает резистор?",
+  "expected": "The closed literal pairs must advance the nodes step and the concept question must receive its answer.",
+  "evidence_chunks": {
+    "s0": "R1: C–A; R2: B–C; R3: B–A. А буква R обозначает резистор",
+    "s1": "R1: C–A",
+    "s2": "R2: B–C",
+    "s3": "R3: B–A",
+    "s4": "А буква R обозначает резистор",
+    "s5": "R3: B–A. А буква R обозначает резистор"
+  },
+  "responses": {
+    "extract": {
+      "intent": "question",
+      "question_text": "А буква R обозначает резистор",
+      "withdraws_previous": false,
+      "solution": {
+        "retracted_evidence": [],
+        "universals": [],
+        "terminals": [
+          {
+            "element": "R1",
+            "nodes": [],
+            "evidence": "s1"
+          },
+          {
+            "element": "R2",
+            "nodes": [],
+            "evidence": "s2"
+          },
+          {
+            "element": "R3",
+            "nodes": [],
+            "evidence": "s3"
+          }
+        ]
+      }
+    },
+    "plan": {
+      "scope": "concept",
+      "mode": "explain",
+      "topic": "elements"
+    },
+    "select": {
+      "answer_kind": "explain",
+      "source_ids": [
+        "concept-6"
+      ]
+    },
+    "check": {
+      "supported": true,
+      "answers_question": true,
+      "reveals_solution": false
+    }
+  }
+}

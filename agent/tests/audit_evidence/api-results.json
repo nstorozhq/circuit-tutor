@@ -1,0 +1,445 @@
+{
+  "kind": "independent_offline_api",
+  "count": 12,
+  "passed": 12,
+  "source_hashes": {
+    "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/accounts.py": "ae5a8d382b2543f26d651155f8f77b4866702c6cf63b5b934014ab3d583d0b69",
+    "app/answers.py": "034f9a56f9a0277aca64cd1c426289714cf542a4fffd1b042df2827b153aecc1",
+    "app/claims.py": "9c1ad43bc77e5bd0d7d93215ed69873bfc1d4fcd211ca93215ae89ab28c3e2a0",
+    "app/knowledge.py": "de6ae7e52f05ec1843cd3b91cfd27e8333152aefe4fe25c00111b244bdea6fe3",
+    "app/main.py": "199b474be4a8be6a454b35ff00fdd89006a4bcc8ea5da4d687c86c768b7326a6",
+    "app/model.py": "f9a7d7fc207572c13ea8f49b2adc00603fdf94b86cb93097bdf3b485079bf643",
+    "app/rag.py": "af050c9aca91190152844006fbde4186e0d5003c37e8f5163a532f1df2a83137",
+    "app/tutor.py": "a30ad987c57544475b8cfe779ea494983c3d3be39017cbc27e17464dd9ea0939",
+    "knowledge_base/lesson.json": "07d228c3caed9312dcd22c8ce2411519c2a41f062b8c9eb5e5724cacd27851e3"
+  },
+  "results": [
+    {
+      "id": "hidden_absence_no_credit",
+      "expected": "Скрытый контакт: отрицание параллельности не даёт переход и балл.",
+      "pass": true,
+      "actual": {
+        "reply": "Проверь, все ли участки этого вида ты назвал, и обоснуй каждый.",
+        "accounts_created": 0,
+        "stale_rollback_ok": true,
+        "before": {
+          "index": 5,
+          "phase": "spoken",
+          "operation": 3,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        },
+        "after": {
+          "index": 5,
+          "phase": "spoken",
+          "operation": 3,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        },
+        "final": {
+          "index": 5,
+          "phase": "spoken",
+          "operation": 3,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        }
+      }
+    },
+    {
+      "id": "valid_unknown_can_finish",
+      "expected": "Корректная неопределённость C08 завершает шаг.",
+      "pass": true,
+      "actual": {
+        "reply": "Самостоятельный ответ принят.\n\nКонтрольная. Ответь на четыре вопроса по схеме. Обратная связь и разбор будут после сдачи обеих схем.\n\nМежду какими узлами подключён каждый элемент?",
+        "accounts_created": 0,
+        "stale_rollback_ok": true,
+        "before": {
+          "index": 7,
+          "phase": "solo",
+          "operation": 0,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        },
+        "after": {
+          "index": 8,
+          "phase": "test",
+          "operation": 0,
+          "case_correct": 0,
+          "spoken_named": false,
+          "teacher": false,
+          "pending_present": false
+        },
+        "final": {
+          "index": 8,
+          "phase": "test",
+          "operation": 0,
+          "case_correct": 0,
+          "spoken_named": false,
+          "teacher": false,
+          "pending_present": false
+        }
+      }
+    },
+    {
+      "id": "covered_false_geometry",
+      "expected": "Дополнительный ложный тезис в terminal evidence не даёт зачёт.",
+      "pass": true,
+      "actual": {
+        "reply": "В ответе есть ещё физическое утверждение или условие. Уточни его, чтобы проверить ответ целиком.",
+        "accounts_created": 0,
+        "stale_rollback_ok": true,
+        "before": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 1,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        },
+        "after": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 1,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        },
+        "final": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 1,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        }
+      }
+    },
+    {
+      "id": "withdrawal_scope_false_claim",
+      "expected": "Отзыв пары не скрывает соседний ложный тезис.",
+      "pass": true,
+      "actual": {
+        "reply": "В ответе есть ещё физическое утверждение или условие. Уточни его, чтобы проверить ответ целиком.",
+        "accounts_created": 0,
+        "stale_rollback_ok": true,
+        "before": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 1,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        },
+        "after": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 1,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        },
+        "final": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 1,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        }
+      }
+    },
+    {
+      "id": "question_preserves_full_pending",
+      "expected": "Вопрос сохраняет полный pending, подтверждение засчитывает ровно один раз.",
+      "pass": true,
+      "actual": {
+        "reply": "Проверь промежуточный узел между выбранными элементами. Если от общего узла отходит ещё одна ветвь, эти элементы не образуют простую последовательную цепочку.",
+        "accounts_created": 0,
+        "stale_rollback_ok": true,
+        "before": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 2,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": true
+        },
+        "after": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 2,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": true
+        },
+        "final": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 3,
+          "case_correct": 1,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        }
+      }
+    },
+    {
+      "id": "timeout_preserves_full_pending",
+      "expected": "Timeout сохраняет полный pending, подтверждение засчитывает ровно один раз.",
+      "pass": true,
+      "actual": {
+        "reply": "Помощник временно недоступен. Ответ не оценён, прогресс сохранён.\n\nПроверь промежуточный узел между выбранными элементами.\n\nКакие элементы или участки соединены последовательно? Назови общий узел и объясни, есть ли там ответвление.",
+        "accounts_created": 0,
+        "stale_rollback_ok": true,
+        "before": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 2,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": true
+        },
+        "after": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 2,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": true
+        },
+        "final": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 3,
+          "case_correct": 1,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        }
+      }
+    },
+    {
+      "id": "withdrawal_invalidates_pending",
+      "expected": "Отзыв очищает pending, подтверждение не даёт балл.",
+      "pass": true,
+      "actual": {
+        "reply": "Проверь, все ли участки этого вида ты назвал, и обоснуй каждый.",
+        "accounts_created": 0,
+        "stale_rollback_ok": true,
+        "before": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 2,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": true
+        },
+        "after": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 2,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        },
+        "final": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 2,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        }
+      }
+    },
+    {
+      "id": "diagnostic_cannot_overrule_reversed_pairs",
+      "expected": "Верные обратные пары принимаются вопреки diagnostic=contradiction; повторного балла нет.",
+      "pass": true,
+      "actual": {
+        "reply": "Верно. Этот шаг выполнен.\n\nКакие элементы или участки соединены последовательно? Назови общий узел и объясни, есть ли там ответвление.",
+        "accounts_created": 0,
+        "stale_rollback_ok": true,
+        "before": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 1,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        },
+        "after": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 2,
+          "case_correct": 1,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        },
+        "final": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 2,
+          "case_correct": 1,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        }
+      }
+    },
+    {
+      "id": "concurrent_commit_rollback",
+      "expected": "Проигравший вычисленный ход получает 409; состояние/балл/история и turns откатываются.",
+      "pass": true,
+      "actual": {
+        "late_status": 409,
+        "history_length": 3,
+        "failed_turn_saved": 0,
+        "final": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 1,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": true,
+          "pending_present": false
+        }
+      }
+    },
+    {
+      "id": "D14_leading_rejection_with_wrong_ml_flag",
+      "expected": "Ведущее отрицание снимает pending даже при withdraw=false.",
+      "pass": true,
+      "actual": {
+        "reply": "Проверь промежуточный узел между выбранными элементами. Если от общего узла отходит ещё одна ветвь, эти элементы не образуют простую последовательную цепочку.",
+        "accounts_created": 0,
+        "stale_rollback_ok": true,
+        "before": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 2,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": true
+        },
+        "after": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 2,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        },
+        "final": {
+          "index": 0,
+          "phase": "guided",
+          "operation": 2,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        }
+      }
+    },
+    {
+      "id": "extra_known_unknown_terminals",
+      "expected": "Буквальный скрытый вывод принимается и переводит шаг.",
+      "pass": true,
+      "actual": {
+        "reply": "Верно. Этот шаг выполнен.\n\nНазови следующее действие по памяти.",
+        "accounts_created": 0,
+        "stale_rollback_ok": true,
+        "before": {
+          "index": 5,
+          "phase": "spoken",
+          "operation": 1,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        },
+        "after": {
+          "index": 5,
+          "phase": "spoken",
+          "operation": 2,
+          "case_correct": 1,
+          "spoken_named": false,
+          "teacher": false,
+          "pending_present": false
+        },
+        "final": {
+          "index": 5,
+          "phase": "spoken",
+          "operation": 2,
+          "case_correct": 1,
+          "spoken_named": false,
+          "teacher": false,
+          "pending_present": false
+        }
+      }
+    },
+    {
+      "id": "extra_recall_all_elements",
+      "expected": "Название действия с «все» принимается, выполнение операции ещё требуется.",
+      "pass": true,
+      "actual": {
+        "reply": "Действие подходит.\n\nВыполни названное действие и запиши результат.",
+        "accounts_created": 0,
+        "stale_rollback_ok": true,
+        "before": {
+          "index": 2,
+          "phase": "spoken",
+          "operation": 0,
+          "case_correct": 0,
+          "spoken_named": false,
+          "teacher": false,
+          "pending_present": false
+        },
+        "after": {
+          "index": 2,
+          "phase": "spoken",
+          "operation": 0,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        },
+        "final": {
+          "index": 2,
+          "phase": "spoken",
+          "operation": 0,
+          "case_correct": 0,
+          "spoken_named": true,
+          "teacher": false,
+          "pending_present": false
+        }
+      }
+    }
+  ]
+}

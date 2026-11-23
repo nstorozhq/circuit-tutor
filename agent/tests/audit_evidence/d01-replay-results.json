@@ -1,0 +1,28 @@
+{
+  "kind": "independent_offline_replay",
+  "id": "D01_saved_empty_nodes",
+  "pass": true,
+  "expected": "The closed literal pairs must advance the nodes step and the concept question must receive its answer.",
+  "reply": "Верно. Этот шаг выполнен.\n\nРезистор. Резистор — элемент электрической цепи с заданным электрическим сопротивлением. Его используют, например, для ограничения силы тока. На схемах этого урока резистор изображён прямоугольником и обозначен буквой R с номером. У него два вывода, которыми он подключается к остальной цепи.\n\nКакие элементы или участки соединены последовательно? Назови общий узел и объясни, есть ли там ответвление.",
+  "calls": [
+    "extract",
+    "diagnostic",
+    "plan",
+    "select",
+    "check"
+  ],
+  "before_operation": 1,
+  "after_operation": 2,
+  "source_hashes": {
+    "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/accounts.py": "ae5a8d382b2543f26d651155f8f77b4866702c6cf63b5b934014ab3d583d0b69",
+    "app/answers.py": "034f9a56f9a0277aca64cd1c426289714cf542a4fffd1b042df2827b153aecc1",
+    "app/claims.py": "9c1ad43bc77e5bd0d7d93215ed69873bfc1d4fcd211ca93215ae89ab28c3e2a0",
+    "app/knowledge.py": "de6ae7e52f05ec1843cd3b91cfd27e8333152aefe4fe25c00111b244bdea6fe3",
+    "app/main.py": "199b474be4a8be6a454b35ff00fdd89006a4bcc8ea5da4d687c86c768b7326a6",
+    "app/model.py": "f9a7d7fc207572c13ea8f49b2adc00603fdf94b86cb93097bdf3b485079bf643",
+    "app/rag.py": "af050c9aca91190152844006fbde4186e0d5003c37e8f5163a532f1df2a83137",
+    "app/tutor.py": "a30ad987c57544475b8cfe779ea494983c3d3be39017cbc27e17464dd9ea0939",
+    "knowledge_base/lesson.json": "07d228c3caed9312dcd22c8ce2411519c2a41f062b8c9eb5e5724cacd27851e3"
+  }
+}

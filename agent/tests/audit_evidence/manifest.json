@@ -1,0 +1,54 @@
+{
+  "base_commit": "92742ec0486e7489c96431175359623732504c11",
+  "files": {
+    "app/accounts.py": "ae5a8d382b2543f26d651155f8f77b4866702c6cf63b5b934014ab3d583d0b69",
+    "app/claims.py": "9c1ad43bc77e5bd0d7d93215ed69873bfc1d4fcd211ca93215ae89ab28c3e2a0",
+    "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/model.py": "f9a7d7fc207572c13ea8f49b2adc00603fdf94b86cb93097bdf3b485079bf643",
+    "app/answers.py": "034f9a56f9a0277aca64cd1c426289714cf542a4fffd1b042df2827b153aecc1",
+    "app/rag.py": "af050c9aca91190152844006fbde4186e0d5003c37e8f5163a532f1df2a83137",
+    "app/main.py": "199b474be4a8be6a454b35ff00fdd89006a4bcc8ea5da4d687c86c768b7326a6",
+    "app/knowledge.py": "de6ae7e52f05ec1843cd3b91cfd27e8333152aefe4fe25c00111b244bdea6fe3",
+    "app/tutor.py": "a30ad987c57544475b8cfe779ea494983c3d3be39017cbc27e17464dd9ea0939",
+    "knowledge_base/lesson.json": "07d228c3caed9312dcd22c8ce2411519c2a41f062b8c9eb5e5724cacd27851e3"
+  },
+  "consistent_copy": true,
+  "kind": "independent_offline_audit",
+  "scope": "Agreed claims, pending and API regression cases; excludes live provider evaluation",
+  "unit_modules": [
+    "tests.test_dialogue",
+    "tests.test_rag",
+    "tests.test_lesson",
+    "tests.test_mixed_turns",
+    "tests.test_claims",
+    "tests.test_audit_regressions"
+  ],
+  "unit_tests": 62,
+  "account_tests_run": false,
+  "evidence_files": {
+    "README.md": "ab00b2230b7f5b90ef68980e5b481d6bc802c22e67ac0a74b16b344c52ade676",
+    "api-results.json": "331a9d3425fd9339f42d54a7fc7915e2d186a79a9dd3ad00274eb21b3986af03",
+    "api_regressions.py": "59387c5725dd19c38d15afb7d58e88583d486eae9e0c5eda54b06231a92b27d0",
+    "compatibility-results.json": "5e896eaec4144f72a971a78ed71223eba22390bd7a95dc4ff73b661d074f339b",
+    "d01-extraction-fixture.json": "76033a890cf88caad34589c243dc09c8a827533623d2de95137fd5ccf15f7b7f",
+    "d01-replay-results.json": "520c8657a8f8cc0612631fcb6c94131a47590c6c90ddc4f0854431dd0124e3ad",
+    "independent-results.json": "890a4782a3c4969a00ce54af67609dc94336b16375a305af2d4b7592c8325807",
+    "live-content-review.json": "bca2015edd607599a48c15704d30f97eb6d2dc8364f7a03e85eed793a6443799",
+    "replay_literal_pairs.py": "9bedb4ce5ea25e11717581dbf067a502b6342e56dd93435b3203475149055eef",
+    "run_unit_audit.py": "8f148e0f8542a9a7e1489f1cdb9d79f7e74058e6009ed2500cc093d1f00b67d6",
+    "unit-results.txt": "0a3caf7931e627eab8ec5445d3b688d7ea0a6657dd23a17f0a03ccae66e127cd"
+  },
+  "regression_files": {
+    "tests/test_claims.py": "2b7ce1e385dba81b3cc8d086906f6cbddacb9a4a619493a55d02db32adb49a72",
+    "tests/test_audit_regressions.py": "da65eb77a823338754c025defd9b4c17bea109dbd276bc458866669a746eae1a",
+    "tests/audit_contract_cases.json": "a438be244e11a21d280924d340e74421ff18000355cefebc3da48d73d74007b7",
+    "tests/test_rag.py": "13fdeb5c0b021fdb4a502a806cf223d8248e405f6769d50631da9890d084ee7b",
+    "tests/test_mixed_turns.py": "b249512b6ff9867e9072e43cb8c11a6acdb2000414a52a70db72ecd8f10627a1",
+    "tests/test_accounts.py": "c7dd85ee52820b0853a76ea087fdd5a41cc9777a26f46b90bed0f5fe5b3af0a5",
+    "tests/test_lesson.py": "08257a06e1e2a9b2b9e2ebd14899bf9faaa886bac910f4cad90945b23ef10062"
+  },
+  "live_review": "live-content-review.json (manual review of author runs; separate from independent offline results)",
+  "local_python": "3.12.14",
+  "unit_runner": "tests/audit_evidence/run_unit_audit.py",
+  "compatibility_review": "compatibility-results.json (independent local review; server/public runs attributed to author)"
+}

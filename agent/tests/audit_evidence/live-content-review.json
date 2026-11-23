@@ -1,0 +1,320 @@
+{
+  "kind": "independent_manual_review_of_author_live_runs",
+  "live_calls_made_by_auditor": false,
+  "sources": {
+    "followup_results_release_final_2026-11-23.json": {
+      "sha256": "02c99b1364acbd510e8d275ca35d9ecfdb1456d2cc1b4a526a42904c1d4bbc7c",
+      "source_hashes": {
+        "accounts.py": "ae5a8d382b2543f26d651155f8f77b4866702c6cf63b5b934014ab3d583d0b69",
+        "claims.py": "475fa8967ad9f818cf68ce63daa9d58d291de6a6c7e6bd87f22657d6a475ec50",
+        "__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "model.py": "e2f08a82607a1b5fc8afa632ad37cd12834c8ab26c906a651ca943765b066585",
+        "answers.py": "034f9a56f9a0277aca64cd1c426289714cf542a4fffd1b042df2827b153aecc1",
+        "rag.py": "af050c9aca91190152844006fbde4186e0d5003c37e8f5163a532f1df2a83137",
+        "main.py": "199b474be4a8be6a454b35ff00fdd89006a4bcc8ea5da4d687c86c768b7326a6",
+        "knowledge.py": "de6ae7e52f05ec1843cd3b91cfd27e8333152aefe4fe25c00111b244bdea6fe3",
+        "tutor.py": "a30ad987c57544475b8cfe779ea494983c3d3be39017cbc27e17464dd9ea0939",
+        "knowledge_base/lesson.json": "a9404894d173d3960553add13d9ef02426d17bc64936ac478b33d2bcdab53c88"
+      },
+      "cases": 31,
+      "turns": 34,
+      "state_pass": 34,
+      "post_get_pass": 34,
+      "provider_pass": 31
+    },
+    "followup_results_help_refinement_2026-11-23.json": {
+      "sha256": "4296b111c0f64f746c961352b0681bf26ddab489d9e3d99c105aad6e5ab6d80e",
+      "source_hashes": {
+        "accounts.py": "ae5a8d382b2543f26d651155f8f77b4866702c6cf63b5b934014ab3d583d0b69",
+        "claims.py": "9c1ad43bc77e5bd0d7d93215ed69873bfc1d4fcd211ca93215ae89ab28c3e2a0",
+        "__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "model.py": "e2f08a82607a1b5fc8afa632ad37cd12834c8ab26c906a651ca943765b066585",
+        "answers.py": "034f9a56f9a0277aca64cd1c426289714cf542a4fffd1b042df2827b153aecc1",
+        "rag.py": "af050c9aca91190152844006fbde4186e0d5003c37e8f5163a532f1df2a83137",
+        "main.py": "199b474be4a8be6a454b35ff00fdd89006a4bcc8ea5da4d687c86c768b7326a6",
+        "knowledge.py": "de6ae7e52f05ec1843cd3b91cfd27e8333152aefe4fe25c00111b244bdea6fe3",
+        "tutor.py": "a30ad987c57544475b8cfe779ea494983c3d3be39017cbc27e17464dd9ea0939",
+        "knowledge_base/lesson.json": "07d228c3caed9312dcd22c8ce2411519c2a41f062b8c9eb5e5724cacd27851e3"
+      },
+      "cases": 6,
+      "turns": 7,
+      "state_pass": 7,
+      "post_get_pass": 7,
+      "provider_pass": 6
+    }
+  },
+  "full_run": [
+    {
+      "id": "original-1",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "original-2",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "original-3",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "original-4",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "original-5",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "original-6",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "partial",
+      "note": "Правильно отвергает геометрию как признак; строгий критерий об общем пути без ответвлений раскрыт не полностью."
+    },
+    {
+      "id": "original-7",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "fail",
+      "note": "В полном прогоне только определение ветви; нет объяснения параллельности целых участков."
+    },
+    {
+      "id": "original-8",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "original-9",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "original-10",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D01",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D02",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D03",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D04",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "fail",
+      "note": "Определение серии не отвечает прямо на сравнение цепочки с одиночным элементом."
+    },
+    {
+      "id": "D05",
+      "progress": "pass",
+      "physics": "concern",
+      "directness": "partial",
+      "note": "Зачёта нет, но правильные целые участки звучат как физически опровергнутые."
+    },
+    {
+      "id": "D06",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D07",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D08",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D09",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "partial",
+      "note": "Correct placement in number words is not fully extracted. Automatic stay expectation passes, but this is not successful recognition of the learner answer.",
+      "recognition": "conservative_false_negative"
+    },
+    {
+      "id": "D10",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D11",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D12",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "partial",
+      "note": "Отзыв и отсутствие зачёта верны; причина ошибки объяснена общо."
+    },
+    {
+      "id": "D13",
+      "progress": "pass",
+      "physics": "not_applicable",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D14",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D15",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D16",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D17",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "partial",
+      "note": "Называет только L1,L2 текущей схемы; смену упражнения явно не объясняет."
+    },
+    {
+      "id": "D18",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D19",
+      "progress": "pass",
+      "physics": "not_applicable",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D20",
+      "progress": "pass",
+      "physics": "not_applicable",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    },
+    {
+      "id": "D21",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Ответ/уточнение соответствует назначению согласованного сценария."
+    }
+  ],
+  "refinement_run": [
+    {
+      "id": "original-7",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "partial",
+      "note": "Теперь объясняет, почему число элементов не мешает параллельности целых ветвей; строгого применения к A/B нет."
+    },
+    {
+      "id": "D02",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Прямо объясняет, что одного общего узла недостаточно и вторые узлы могут различаться."
+    },
+    {
+      "id": "D04",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Прямо допускает сравнение целой цепочки с одиночным элементом, сначала выделив внешние выводы."
+    },
+    {
+      "id": "D05",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "pass",
+      "note": "Нейтральное уточнение групп и внешних узлов без ошибочного физического обвинения."
+    },
+    {
+      "id": "D12",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "partial",
+      "note": "Pending отменён и не подтверждается; причина неверности серии R1/R3 остаётся неразобранной."
+    },
+    {
+      "id": "D17",
+      "progress": "pass",
+      "physics": "pass",
+      "directness": "fail",
+      "note": "Общая подсказка о подсчёте не отвечает, почему на новом упражнении нет прежнего R3."
+    }
+  ],
+  "limits": [
+    "No general proof of natural-language extraction completeness.",
+    "The full run and the narrow refinement use different hashes; do not sum them into a single full latest-version run.",
+    "Directness is a human judgement, separate from state_check and provider_check."
+  ],
+  "runtime_patch_applicability": {
+    "previous_model_sha256": "e2f08a82607a1b5fc8afa632ad37cd12834c8ab26c906a651ca943765b066585",
+    "current_model_sha256": "f9a7d7fc207572c13ea8f49b2adc00603fdf94b86cb93097bdf3b485079bf643",
+    "basis": "Reviewed diff changes deadline/catches only; prompt text, extraction, grading and KB unchanged. Historical full/narrow live hashes remain historical; no full live rerun of the new model hash is claimed."
+  }
+}

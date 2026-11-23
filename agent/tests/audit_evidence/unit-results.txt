@@ -1,0 +1,7 @@
+Python 3.12.14; independent audit; excludes account tests.
+Runner: tests/audit_evidence/run_unit_audit.py
+Python audit hook rejects .env opens and SQLite connections outside system temp.
+----------------------------------------------------------------------
+Ran 62 tests in 0.453s
+
+OK

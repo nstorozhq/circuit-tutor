@@ -1,0 +1,79 @@
+{
+  "kind": "independent_narrow_compatibility_review_with_author_reported_runtime_validation",
+  "source_hashes": {
+    "app/accounts.py": "ae5a8d382b2543f26d651155f8f77b4866702c6cf63b5b934014ab3d583d0b69",
+    "app/claims.py": "9c1ad43bc77e5bd0d7d93215ed69873bfc1d4fcd211ca93215ae89ab28c3e2a0",
+    "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/model.py": "f9a7d7fc207572c13ea8f49b2adc00603fdf94b86cb93097bdf3b485079bf643",
+    "app/answers.py": "034f9a56f9a0277aca64cd1c426289714cf542a4fffd1b042df2827b153aecc1",
+    "app/rag.py": "af050c9aca91190152844006fbde4186e0d5003c37e8f5163a532f1df2a83137",
+    "app/main.py": "199b474be4a8be6a454b35ff00fdd89006a4bcc8ea5da4d687c86c768b7326a6",
+    "app/knowledge.py": "de6ae7e52f05ec1843cd3b91cfd27e8333152aefe4fe25c00111b244bdea6fe3",
+    "app/tutor.py": "a30ad987c57544475b8cfe779ea494983c3d3be39017cbc27e17464dd9ea0939",
+    "knowledge_base/lesson.json": "07d228c3caed9312dcd22c8ce2411519c2a41f062b8c9eb5e5724cacd27851e3"
+  },
+  "previous_model_sha256": "e2f08a82607a1b5fc8afa632ad37cd12834c8ab26c906a651ca943765b066585",
+  "changed_app_files": [
+    "app/model.py"
+  ],
+  "narrow_diff": "wait_for covers lock acquisition and request; catches asyncio.TimeoutError; prompts, extraction, KB and grading unchanged",
+  "local_python": "3.12.14",
+  "independent_local": {
+    "unit_tests": 62,
+    "unit_pass": 62,
+    "account_tests_run": false,
+    "portable_api_pass": 12,
+    "portable_api_total": 12,
+    "D01_offline_replay_pass": true,
+    "new_deadline_regression": "queue is included; started request is cancelled; asyncio.TimeoutError becomes unavailable"
+  },
+  "test_compatibility_review": {
+    "test_mixed_turns.py": "asyncio.TimeoutError assertion replaces builtin TimeoutError",
+    "test_accounts.py": "ExitStack and addCleanup preserve context lifetime and assertions; reviewed, not executed by auditor",
+    "test_lesson.py": "ExitStack cleanup closes client before temporary directory; assertions unchanged"
+  },
+  "isolation_checks": [
+    {
+      "script": "api_regressions.py",
+      "pass": true,
+      "env_file_open_attempts": 0,
+      "all_sqlite_connections_in_system_temp": true,
+      "dotenv_loader_restored_after_import": true,
+      "TUTOR_DB_held_in_temporary_directory_until_exit": true
+    },
+    {
+      "script": "replay_literal_pairs.py",
+      "pass": true,
+      "env_file_open_attempts": 0,
+      "all_sqlite_connections_in_system_temp": true,
+      "dotenv_loader_restored_after_import": true,
+      "TUTOR_DB_held_in_temporary_directory_until_exit": true
+    }
+  ],
+  "unit_isolation_check": {
+    "pass": true,
+    "env_open_forbidden": true,
+    "non_temporary_sqlite_forbidden": true
+  },
+  "isolation_history_correction": "Earlier portable imports invoked app.main.load_dotenv; empty GIGACHAT_CREDENTIALS did not prove the absence of automatic dotenv reads. Current scripts suppress the loader and hold TUTOR_DB in a temporary directory. No .env contents were explicitly inspected.",
+  "author_reported_server_validation": {
+    "independently_executed_by_auditor": false,
+    "source": "release_review_2026-11-23.json",
+    "source_sha256": "de27ac7660fc04e0dce1191df6540010b4e581df36bb4af63350f2f0328d4611",
+    "declared_source_hashes_match_local": true,
+    "python": "3.10.12",
+    "unit_pass": 65,
+    "portable_api_pass": 12
+  },
+  "author_public_smoke": {
+    "independently_executed_by_auditor": false,
+    "local_artifact_reviewed": true,
+    "source": "production_smoke_results_2026-11-23.json",
+    "source_sha256": "a5ede6927fabc963551b252a46fd2d11204432db13fd4fbf0b74392fb2febfb0",
+    "pass_recorded": true,
+    "turns": 3,
+    "idempotent_and_post_get": true,
+    "stale_version_rejected": true
+  },
+  "overall_content_approval": false
+}

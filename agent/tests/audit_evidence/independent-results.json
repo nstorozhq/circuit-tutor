@@ -1,0 +1,338 @@
+{
+  "kind": "independent_offline_probes",
+  "source_hashes": {
+    "app/accounts.py": "ae5a8d382b2543f26d651155f8f77b4866702c6cf63b5b934014ab3d583d0b69",
+    "app/claims.py": "9c1ad43bc77e5bd0d7d93215ed69873bfc1d4fcd211ca93215ae89ab28c3e2a0",
+    "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/model.py": "f9a7d7fc207572c13ea8f49b2adc00603fdf94b86cb93097bdf3b485079bf643",
+    "app/answers.py": "034f9a56f9a0277aca64cd1c426289714cf542a4fffd1b042df2827b153aecc1",
+    "app/rag.py": "af050c9aca91190152844006fbde4186e0d5003c37e8f5163a532f1df2a83137",
+    "app/main.py": "199b474be4a8be6a454b35ff00fdd89006a4bcc8ea5da4d687c86c768b7326a6",
+    "app/knowledge.py": "de6ae7e52f05ec1843cd3b91cfd27e8333152aefe4fe25c00111b244bdea6fe3",
+    "app/tutor.py": "a30ad987c57544475b8cfe779ea494983c3d3be39017cbc27e17464dd9ea0939",
+    "knowledge_base/lesson.json": "07d228c3caed9312dcd22c8ce2411519c2a41f062b8c9eb5e5724cacd27851e3"
+  },
+  "claims": [
+    {
+      "id": "K01_hidden_no_parallel",
+      "case": "C06",
+      "step": "parallel",
+      "text": "Параллельных участков нет.",
+      "expected_statuses": [
+        "incomplete"
+      ],
+      "actual": [
+        "incomplete",
+        "Проверь, все ли участки этого вида ты назвал, и обоснуй каждый."
+      ],
+      "pass": true
+    },
+    {
+      "id": "K02_unknown_overall_cannot_complete",
+      "case": "C08",
+      "step": "overall",
+      "text": "Не определить однозначно: второй вывод L3 скрыт. Он может идти к B или к C.",
+      "expected_statuses": [
+        "complete"
+      ],
+      "actual": [
+        "complete",
+        ""
+      ],
+      "pass": true
+    },
+    {
+      "id": "K03_valid_series_subchains",
+      "case": "C02",
+      "step": "series",
+      "text": "L1 и L2 последовательно: C без ответвлений. L2 и L3 последовательно: D без ответвлений.",
+      "expected_statuses": [
+        "complete",
+        "incomplete"
+      ],
+      "actual": [
+        "complete",
+        ""
+      ],
+      "pass": true
+    },
+    {
+      "id": "K04_valid_parallel_subgroups",
+      "case": "C07",
+      "step": "parallel",
+      "text": "R1 и R2 параллельны между A и B. R2 и R3 параллельны между A и B.",
+      "expected_statuses": [
+        "complete",
+        "incomplete"
+      ],
+      "actual": [
+        "complete",
+        ""
+      ],
+      "pass": true
+    },
+    {
+      "id": "K05_universal_domain_branches",
+      "case": "C01",
+      "step": "parallel",
+      "text": "R1–R2 и R3 имеют общие A и B. Все эти ветви параллельны.",
+      "expected_statuses": [
+        "complete",
+        "incomplete"
+      ],
+      "actual": [
+        "complete",
+        ""
+      ],
+      "pass": true
+    },
+    {
+      "id": "K06_negated_terminals",
+      "case": "C01",
+      "step": "nodes",
+      "text": "R1 не соединён с A и C. R2: C–B. R3: A–B.",
+      "expected_statuses": [
+        "incomplete",
+        "contradiction"
+      ],
+      "actual": [
+        "incomplete",
+        "Запиши выбранные подключения утвердительно, без альтернатив или условий."
+      ],
+      "pass": true
+    },
+    {
+      "id": "K07_negated_inventory",
+      "case": "C03",
+      "step": "elements",
+      "text": "На этой схеме нет L1 и L2.",
+      "expected_statuses": [
+        "incomplete",
+        "contradiction"
+      ],
+      "actual": [
+        "incomplete",
+        "Перечисли присутствующие элементы утвердительно, без отрицания или альтернатив."
+      ],
+      "pass": true
+    },
+    {
+      "id": "K08_negated_relation",
+      "case": "C04",
+      "step": "parallel",
+      "text": "R2 и R3 не параллельны, хотя у обоих C и B.",
+      "expected_statuses": [
+        "incomplete",
+        "contradiction"
+      ],
+      "actual": [
+        "incomplete",
+        "Уточни, какое соединение ты утверждаешь: отрицание нельзя считать положительным ответом."
+      ],
+      "pass": true
+    },
+    {
+      "id": "K09_fragment_drops_negation",
+      "case": "C01",
+      "step": "nodes",
+      "text": "Неверно, что R1: A–C. R2: C–B. R3: A–B.",
+      "expected_statuses": [
+        "incomplete",
+        "contradiction"
+      ],
+      "actual": [
+        "incomplete",
+        "uncovered_physics"
+      ],
+      "pass": true
+    },
+    {
+      "id": "K10_universal_wrong_predicate_evidence",
+      "case": "C01",
+      "step": "nodes",
+      "text": "R1: A–C. R2: C–B. R3: A–B. У всех трёх одинаковая пара узлов.",
+      "expected_statuses": [
+        "incomplete",
+        "contradiction"
+      ],
+      "actual": [
+        "incomplete",
+        "Уточни общее утверждение обо всех элементах: оно тоже должно соответствовать схеме."
+      ],
+      "pass": true
+    },
+    {
+      "id": "K11_other_predicate_not_representable",
+      "case": "C01",
+      "step": "nodes",
+      "text": "R1: A–C. R2: C–B. R3: A–B. R1 и R3 параллельны.",
+      "expected_statuses": [
+        "incomplete",
+        "contradiction"
+      ],
+      "actual": [
+        "incomplete",
+        "uncovered_physics"
+      ],
+      "pass": true
+    },
+    {
+      "id": "K12_unrelated_negation_as_reason",
+      "case": "C01",
+      "step": "series",
+      "text": "R1 и R2 последовательны через C. Я не понимаю провод R3.",
+      "expected_statuses": [
+        "incomplete",
+        "contradiction"
+      ],
+      "actual": [
+        "incomplete",
+        "Осталось объяснить, есть ли отдельная ветвь между выбранными участками."
+      ],
+      "pass": true
+    },
+    {
+      "id": "K13_absence_substring",
+      "case": "C03",
+      "step": "series",
+      "text": "Интернет пропал.",
+      "expected_statuses": [
+        "incomplete"
+      ],
+      "actual": [
+        "incomplete",
+        "Проверь, все ли участки этого вида ты назвал, и обоснуй каждый."
+      ],
+      "pass": true
+    },
+    {
+      "id": "K14_position_evidence_reversed",
+      "case": "C01",
+      "step": "branches",
+      "text": "R1 и R2 снизу. R3 сверху.",
+      "expected_statuses": [
+        "incomplete",
+        "contradiction"
+      ],
+      "actual": [
+        "contradiction",
+        "Извлечённое расположение расходится с твоей записью. Уточни верхнюю и нижнюю ветви."
+      ],
+      "pass": true
+    },
+    {
+      "id": "CTRL_correct_pairs",
+      "case": "C01",
+      "step": "nodes",
+      "text": "R1: A–C. R2: C–B. R3: A–B.",
+      "expected_statuses": [
+        "complete"
+      ],
+      "actual": [
+        "complete",
+        ""
+      ],
+      "pass": true
+    },
+    {
+      "id": "CTRL_maximal_series",
+      "case": "C02",
+      "step": "series",
+      "text": "L1 и L2 и L3 последовательно через C и D без ответвлений.",
+      "expected_statuses": [
+        "complete"
+      ],
+      "actual": [
+        "complete",
+        ""
+      ],
+      "pass": true
+    }
+  ],
+  "schema_validation": {
+    "count": 16,
+    "passed": 16,
+    "kind": "local subset; not provider-native"
+  },
+  "positive_examples": [
+    {
+      "id": "correct_action_all",
+      "text": "Выделю все элементы.",
+      "expected": "complete",
+      "actual": [
+        "complete",
+        ""
+      ],
+      "pass": true
+    },
+    {
+      "id": "known_and_unknown_terminals",
+      "text": "R1: A–C; R2: C–B; R3: A, другой вывод скрыт.",
+      "expected": "complete",
+      "actual": [
+        "complete",
+        ""
+      ],
+      "pass": true
+    }
+  ],
+  "coverage_recheck": [
+    {
+      "id": "baseline_correct",
+      "text": "R1: A–C; R2: C–B; R3: A–B.",
+      "expected": "complete",
+      "actual": "complete",
+      "pass": true,
+      "reply": "Верно. Этот шаг выполнен.\n\nКакие элементы или участки соединены последовательно? Назови общий узел и объясни, есть ли там ответвление."
+    },
+    {
+      "id": "covered_false_geometry_marker",
+      "text": "R1: A–C, потому что изгиб создаёт два новых узла; R2: C–B; R3: A–B.",
+      "expected": "incomplete",
+      "actual": "incomplete",
+      "pass": true,
+      "reply": "В ответе есть ещё физическое утверждение или условие. Уточни его, чтобы проверить ответ целиком."
+    },
+    {
+      "id": "retracted_scope_cover",
+      "text": "R1: A–B — зачёркиваю, но резистор является узлом. R1: A–C; R2: C–B; R3: A–B.",
+      "expected": "incomplete",
+      "actual": "incomplete",
+      "pass": true,
+      "reply": "В ответе есть ещё физическое утверждение или условие. Уточни его, чтобы проверить ответ целиком."
+    },
+    {
+      "id": "placements_covered_false_definition",
+      "text": "Сверху R1 и R2; снизу R3, резистор является узлом.",
+      "expected": "incomplete",
+      "actual": "incomplete",
+      "pass": true,
+      "reply": "В ответе есть ещё физическое утверждение или условие. Уточни его, чтобы проверить ответ целиком."
+    },
+    {
+      "id": "placements_uncovered_false_definition",
+      "text": "Сверху R1 и R2; снизу R3. Резистор является узлом.",
+      "expected": "incomplete",
+      "actual": "incomplete",
+      "pass": true,
+      "reply": "В ответе есть ещё физическое утверждение или условие. Уточни его, чтобы проверить ответ целиком."
+    }
+  ],
+  "unit": {
+    "run": 62,
+    "passed": 62,
+    "account_tests_run": false,
+    "modules": [
+      "tests.test_dialogue",
+      "tests.test_rag",
+      "tests.test_lesson",
+      "tests.test_mixed_turns",
+      "tests.test_claims",
+      "tests.test_audit_regressions"
+    ],
+    "python": "3.12.14",
+    "runner": "tests/audit_evidence/run_unit_audit.py",
+    "dotenv_suppressed": true,
+    "temporary_TUTOR_DB": true
+  }
+}
