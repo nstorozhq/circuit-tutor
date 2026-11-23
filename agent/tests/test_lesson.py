@@ -3,7 +3,7 @@ import json
 import sqlite3
 import tempfile
 import unittest
-from contextlib import closing
+from contextlib import ExitStack, closing
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -38,7 +38,9 @@ class LessonTests(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.db = Path(temporary.name) / "test.sqlite3"
-        self.client = self.enterContext(TestClient(create_app(self.db, model)))
+        contexts = ExitStack()
+        self.addCleanup(contexts.close)
+        self.client = contexts.enter_context(TestClient(create_app(self.db, model)))
         self.session = self.client.post("/api/sessions").json()
         self.url = "/api/sessions/" + self.session["id"]
         self.turn_ids = itertools.count(1)

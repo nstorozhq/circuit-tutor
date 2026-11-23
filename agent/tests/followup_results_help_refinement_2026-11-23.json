@@ -1,0 +1,764 @@
+{
+  "model": "GigaChat-3-Pro",
+  "source_hashes": {
+    "accounts.py": "ae5a8d382b2543f26d651155f8f77b4866702c6cf63b5b934014ab3d583d0b69",
+    "claims.py": "9c1ad43bc77e5bd0d7d93215ed69873bfc1d4fcd211ca93215ae89ab28c3e2a0",
+    "__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "model.py": "e2f08a82607a1b5fc8afa632ad37cd12834c8ab26c906a651ca943765b066585",
+    "answers.py": "034f9a56f9a0277aca64cd1c426289714cf542a4fffd1b042df2827b153aecc1",
+    "rag.py": "af050c9aca91190152844006fbde4186e0d5003c37e8f5163a532f1df2a83137",
+    "main.py": "199b474be4a8be6a454b35ff00fdd89006a4bcc8ea5da4d687c86c768b7326a6",
+    "knowledge.py": "de6ae7e52f05ec1843cd3b91cfd27e8333152aefe4fe25c00111b244bdea6fe3",
+    "tutor.py": "a30ad987c57544475b8cfe779ea494983c3d3be39017cbc27e17464dd9ea0939",
+    "knowledge_base/lesson.json": "07d228c3caed9312dcd22c8ce2411519c2a41f062b8c9eb5e5724cacd27851e3"
+  },
+  "target": "local FastAPI / real GigaChat / temporary SQLite",
+  "results": [
+    {
+      "id": "original-7",
+      "suite": "original",
+      "case": "C05",
+      "phase": "spoken",
+      "step": 3,
+      "pending": false,
+      "text": "Но в каждой ветке по две лампы. Почему тогда можно считать целые ветки параллельными?",
+      "expect": "stay",
+      "criterion": "Объяснить общую пару узлов A и B для целых ветвей L1–L2 и L3–L4, не засчитывая вопрос как ответ.",
+      "turns": [
+        {
+          "text": "Но в каждой ветке по две лампы. Почему тогда можно считать целые ветки параллельными?",
+          "before": {
+            "phase": "spoken",
+            "index": 4,
+            "operation": 3,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": null,
+            "results": [],
+            "errors": {},
+            "case_correct": 0,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": true,
+            "show_options": false
+          },
+          "after": {
+            "phase": "spoken",
+            "index": 4,
+            "operation": 3,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": null,
+            "results": [],
+            "errors": {},
+            "case_correct": 0,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": true,
+            "show_options": false
+          },
+          "reply": "Ветвь. Ветвь — участок цепи между узлами, внутри которого нет разветвлений. В одной ветви может находиться несколько последовательно соединённых элементов. Ветвь из нескольких элементов и ветвь с одним элементом могут быть параллельны: у целых ветвей должна совпадать пара внешних узлов. Число элементов внутри ветви не определяет её параллельность другой ветви.\n\nПараллельное соединение. Два элемента или участка соединены параллельно, если их выводы подключены к одной и той же паре узлов. Одного общего узла недостаточно.",
+          "grounding": {
+            "status": "matched",
+            "source_ids": [
+              "concept-7",
+              "concept-2"
+            ],
+            "retrieved_source_ids": [
+              "concept-7",
+              "concept-1",
+              "concept-8",
+              "C05-facts",
+              "C05-parallel-hint",
+              "C05-parallel"
+            ],
+            "intent": "question",
+            "answer_verified": false,
+            "help_scope": "concept",
+            "assessment": "incomplete"
+          },
+          "state_check": true,
+          "state_consistent": true,
+          "full_pending_preserved": true
+        }
+      ],
+      "model_calls": [
+        {
+          "kind": "extract",
+          "response": "{\n    \"intent\": \"question\",\n    \"question_text\": \"Почему тогда можно считать целые ветки параллельными\",\n    \"withdraws_previous\": false,\n    \"solution\": {\n        \"retracted_evidence\": [],\n        \"universals\": [],\n        \"relations\": [\n            {\n                \"relation\": \"parallel\",\n                \"groups\": [\n                    \"L1\",\n                    \"L2\"\n                ],\n                \"nodes\": [\n                    \"A\",\n                    \"B\"\n                ],\n                \"no_extra_branch\": true,\n                \"evidence\": \"s0\"\n            },\n            {\n                \"relation\": \"parallel\",\n                \"groups\": [\n                    \"L3\",\n                    \"L4\"\n                ],\n                \"nodes\": [\n                    \"C\",\n                    \"D\"\n                ],\n                \"no_extra_branch\": true,\n                \"evidence\": \"s0\"\n            }\n        ],\n        \"no_relation\": \"series\",\n        \"no_relation_evidence\": \"\"\n    }\n}",
+          "source_ids": [],
+          "evidence_chunks": {
+            "s0": "Но в каждой ветке по две лампы. Почему тогда можно считать целые ветки параллельными",
+            "s1": "Но в каждой ветке по две лампы",
+            "s2": "Почему тогда можно считать целые ветки параллельными"
+          }
+        },
+        {
+          "kind": "plan",
+          "response": "{\n    \"scope\": \"concept\",\n    \"mode\": \"explain\",\n    \"topic\": \"branches\"\n}",
+          "source_ids": [],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "select",
+          "response": "{\n    \"answer_kind\": \"explain\",\n    \"source_ids\": [\n        \"concept-7\",\n        \"concept-2\"\n    ]\n}",
+          "source_ids": [
+            "concept-7",
+            "concept-2",
+            "concept-1"
+          ],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "check",
+          "response": "{\n    \"supported\": true,\n    \"answers_question\": true,\n    \"reveals_solution\": false\n}",
+          "source_ids": [
+            "concept-7",
+            "concept-2",
+            "concept-1"
+          ],
+          "evidence_chunks": null
+        }
+      ],
+      "seconds": 7.9,
+      "content_review": "pending",
+      "provider_check": true
+    },
+    {
+      "id": "D02",
+      "suite": "audit",
+      "case": "C04",
+      "step": 3,
+      "text": "R2 с R3 включены между C и B, поэтому они параллельны. Зачем проверять сразу оба конца?",
+      "expect": "progress",
+      "turns": [
+        {
+          "text": "R2 с R3 включены между C и B, поэтому они параллельны. Зачем проверять сразу оба конца?",
+          "before": {
+            "phase": "spoken",
+            "index": 3,
+            "operation": 3,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": null,
+            "results": [],
+            "errors": {},
+            "case_correct": 0,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": true,
+            "show_options": false
+          },
+          "after": {
+            "phase": "spoken",
+            "index": 3,
+            "operation": 4,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": null,
+            "results": [],
+            "errors": {},
+            "case_correct": 1,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": false,
+            "show_options": false
+          },
+          "reply": "Верно. Этот шаг выполнен.\n\nВывод элемента. Вывод элемента — контакт, которым он соединяется с проводом или другим элементом. У каждого резистора на учебной схеме два вывода. Чтобы найти узлы подключения, нужно проследить провод от каждого вывода до буквы узла. Важно проверить оба конца: один общий узел ещё не означает параллельного соединения, вторые узлы могут различаться.\n\nНазови следующее действие по памяти.",
+          "grounding": {
+            "status": "matched",
+            "source_ids": [
+              "concept-8"
+            ],
+            "retrieved_source_ids": [
+              "concept-8",
+              "concept-2",
+              "concept-3",
+              "C04-facts",
+              "C04-component-help",
+              "C04-parallel-hint",
+              "C04-parallel"
+            ],
+            "intent": "partial",
+            "answer_verified": true,
+            "help_scope": "concept",
+            "assessment": "complete"
+          },
+          "state_check": true,
+          "state_consistent": true,
+          "full_pending_preserved": true
+        }
+      ],
+      "model_calls": [
+        {
+          "kind": "extract",
+          "response": "{\n    \"intent\": \"partial\",\n    \"question_text\": \"Зачем проверять сразу оба конца\",\n    \"withdraws_previous\": false,\n    \"solution\": {\n        \"retracted_evidence\": [],\n        \"universals\": [\n            {\n                \"relation\": \"parallel\",\n                \"domain\": \"elements\",\n                \"value\": true,\n                \"evidence\": \"s1\"\n            }\n        ],\n        \"relations\": [\n            {\n                \"relation\": \"parallel\",\n                \"groups\": [\n                    \"R2\",\n                    \"R3\"\n                ],\n                \"nodes\": [\n                    \"C\",\n                    \"B\"\n                ],\n                \"no_extra_branch\": true,\n                \"evidence\": \"s1\"\n            }\n        ],\n        \"no_relation\": \"series\",\n        \"no_relation_evidence\": \"\"\n    }\n}",
+          "source_ids": [],
+          "evidence_chunks": {
+            "s0": "R2 с R3 включены между C и B, поэтому они параллельны. Зачем проверять сразу оба конца",
+            "s1": "R2 с R3 включены между C и B, поэтому они параллельны",
+            "s2": "Зачем проверять сразу оба конца",
+            "s3": "R2 с",
+            "s4": "R3 включены между C и B, поэтому они параллельны. Зачем проверять сразу оба конца",
+            "s5": "R3 включены между C и B, поэтому они параллельны"
+          }
+        },
+        {
+          "kind": "verify",
+          "response": "{\n    \"verdict\": \"equivalent\"\n}",
+          "source_ids": [],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "plan",
+          "response": "{\n    \"scope\": \"concept\",\n    \"mode\": \"explain\",\n    \"topic\": \"parallel\"\n}",
+          "source_ids": [],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "select",
+          "response": "{\n    \"answer_kind\": \"explain\",\n    \"source_ids\": [\n        \"concept-2\"\n    ]\n}",
+          "source_ids": [
+            "concept-8",
+            "concept-2",
+            "concept-7"
+          ],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "check",
+          "response": "{\n    \"supported\": true,\n    \"answers_question\": false,\n    \"reveals_solution\": false\n}",
+          "source_ids": [
+            "concept-8",
+            "concept-2",
+            "concept-7"
+          ],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "select",
+          "response": "{\n    \"answer_kind\": \"explain\",\n    \"source_ids\": [\n        \"concept-2\"\n    ]\n}",
+          "source_ids": [
+            "concept-8",
+            "concept-2",
+            "concept-7"
+          ],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "check",
+          "response": "{\n    \"supported\": true,\n    \"answers_question\": false,\n    \"reveals_solution\": false\n}",
+          "source_ids": [
+            "concept-8",
+            "concept-2",
+            "concept-7"
+          ],
+          "evidence_chunks": null
+        }
+      ],
+      "seconds": 8.05,
+      "content_review": "pending",
+      "provider_check": true
+    },
+    {
+      "id": "D04",
+      "suite": "audit",
+      "case": "C01",
+      "step": 3,
+      "text": "Я пока не даю ответ. Можно ли вообще сравнивать цепочку из двух элементов с одиночным резистором?",
+      "expect": "stay",
+      "turns": [
+        {
+          "text": "Я пока не даю ответ. Можно ли вообще сравнивать цепочку из двух элементов с одиночным резистором?",
+          "before": {
+            "phase": "guided",
+            "index": 0,
+            "operation": 3,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": null,
+            "results": [],
+            "errors": {},
+            "case_correct": 0,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": true,
+            "show_options": false
+          },
+          "after": {
+            "phase": "guided",
+            "index": 0,
+            "operation": 3,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": null,
+            "results": [],
+            "errors": {},
+            "case_correct": 0,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": true,
+            "show_options": false
+          },
+          "reply": "Последовательное соединение. У элементов последовательной цепочки есть общие промежуточные узлы. От этих узлов нет ответвлений. Проверять соединение можно и между целыми участками: сначала выдели внешние выводы каждого участка. Цепочку из нескольких элементов можно рассматривать как один участок и сравнивать её подключения с подключениями одиночного элемента.",
+          "grounding": {
+            "status": "matched",
+            "source_ids": [
+              "concept-1"
+            ],
+            "retrieved_source_ids": [
+              "concept-1",
+              "concept-8",
+              "concept-6",
+              "C01-facts",
+              "C01-parallel-hint",
+              "C01-parallel"
+            ],
+            "intent": "question",
+            "answer_verified": false,
+            "help_scope": "concept",
+            "assessment": "incomplete"
+          },
+          "state_check": true,
+          "state_consistent": true,
+          "full_pending_preserved": true
+        }
+      ],
+      "model_calls": [
+        {
+          "kind": "extract",
+          "response": "{\n    \"intent\": \"question\",\n    \"question_text\": \"Можно ли вообще сравнивать цепочку из двух элементов с одиночным резистором\",\n    \"withdraws_previous\": false,\n    \"solution\": {\n        \"retracted_evidence\": [],\n        \"universals\": [],\n        \"relations\": [],\n        \"no_relation\": \"none\",\n        \"no_relation_evidence\": \"\"\n    }\n}",
+          "source_ids": [],
+          "evidence_chunks": {
+            "s0": "Я пока не даю ответ. Можно ли вообще сравнивать цепочку из двух элементов с одиночным резистором",
+            "s1": "Я пока не даю ответ",
+            "s2": "Можно ли вообще сравнивать цепочку из двух элементов с одиночным резистором"
+          }
+        },
+        {
+          "kind": "plan",
+          "response": "{\n    \"scope\": \"concept\",\n    \"mode\": \"explain\",\n    \"topic\": \"series\"\n}",
+          "source_ids": [],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "select",
+          "response": "{\n    \"answer_kind\": \"explain\",\n    \"source_ids\": [\n        \"concept-1\"\n    ]\n}",
+          "source_ids": [
+            "concept-1",
+            "concept-6",
+            "concept-8"
+          ],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "check",
+          "response": "{\n    \"supported\": true,\n    \"answers_question\": false,\n    \"reveals_solution\": false\n}",
+          "source_ids": [
+            "concept-1",
+            "concept-6",
+            "concept-8"
+          ],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "select",
+          "response": "{\n    \"answer_kind\": \"explain\",\n    \"source_ids\": [\n        \"concept-1\"\n    ]\n}",
+          "source_ids": [
+            "concept-1",
+            "concept-6",
+            "concept-8"
+          ],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "check",
+          "response": "{\n    \"supported\": true,\n    \"answers_question\": false,\n    \"reveals_solution\": false\n}",
+          "source_ids": [
+            "concept-1",
+            "concept-6",
+            "concept-8"
+          ],
+          "evidence_chunks": null
+        }
+      ],
+      "seconds": 5.83,
+      "content_review": "pending",
+      "provider_check": true
+    },
+    {
+      "id": "D05",
+      "suite": "audit",
+      "case": "C01",
+      "step": 3,
+      "text": "Параллельны ветвь R1–R2 и ветвь R3.",
+      "expect": "stay",
+      "turns": [
+        {
+          "text": "Параллельны ветвь R1–R2 и ветвь R3.",
+          "before": {
+            "phase": "guided",
+            "index": 0,
+            "operation": 3,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": null,
+            "results": [],
+            "errors": {},
+            "case_correct": 0,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": true,
+            "show_options": false
+          },
+          "after": {
+            "phase": "guided",
+            "index": 0,
+            "operation": 3,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": null,
+            "results": [],
+            "errors": {},
+            "case_correct": 0,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": true,
+            "show_options": false
+          },
+          "reply": "Пока не получилось подтвердить состав и соединение участков. Запиши каждый целый участок отдельно и укажи его внешние узлы.",
+          "grounding": {
+            "status": "matched",
+            "source_ids": [],
+            "retrieved_source_ids": [
+              "concept-7",
+              "concept-3",
+              "concept-2",
+              "C01-facts",
+              "C01-component-help",
+              "C01-parallel-hint",
+              "C01-parallel"
+            ],
+            "intent": "partial",
+            "answer_verified": false,
+            "help_scope": "none",
+            "assessment": "contradiction"
+          },
+          "state_check": true,
+          "state_consistent": true,
+          "full_pending_preserved": true
+        }
+      ],
+      "model_calls": [
+        {
+          "kind": "extract",
+          "response": "{\n    \"intent\": \"partial\",\n    \"question_text\": \"\",\n    \"withdraws_previous\": false,\n    \"solution\": {\n        \"retracted_evidence\": [],\n        \"universals\": [],\n        \"relations\": [\n            {\n                \"relation\": \"parallel\",\n                \"groups\": [\n                    \"R1\",\n                    \"R2\"\n                ],\n                \"nodes\": [\n                    \"A\",\n                    \"B\"\n                ],\n                \"no_extra_branch\": true,\n                \"evidence\": \"s0\"\n            },\n            {\n                \"relation\": \"parallel\",\n                \"groups\": [\n                    \"R3\",\n                    \"R1\"\n                ],\n                \"nodes\": [\n                    \"A\",\n                    \"B\"\n                ],\n                \"no_extra_branch\": true,\n                \"evidence\": \"s0\"\n            }\n        ],\n        \"no_relation\": \"series\",\n        \"no_relation_evidence\": \"\"\n    }\n}",
+          "source_ids": [],
+          "evidence_chunks": {
+            "s0": "Параллельны ветвь R1–R2 и ветвь R3",
+            "s1": "R1–",
+            "s2": "R2 и ветвь",
+            "s3": "R3"
+          }
+        }
+      ],
+      "seconds": 3.86,
+      "content_review": "pending",
+      "provider_check": true
+    },
+    {
+      "id": "D12",
+      "suite": "audit",
+      "case": "C01",
+      "step": 2,
+      "text": "Отменяю свой предыдущий ответ. Теперь считаю R1 и R3 последовательными, поскольку оба касаются A.",
+      "expect": "stay",
+      "pending": true,
+      "expect_pending": false,
+      "followup": "Подтвердить",
+      "followup_expect": "stay",
+      "turns": [
+        {
+          "text": "Отменяю свой предыдущий ответ. Теперь считаю R1 и R3 последовательными, поскольку оба касаются A.",
+          "before": {
+            "phase": "guided",
+            "index": 0,
+            "operation": 2,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": {
+              "key": "correct",
+              "prompt": "Какие элементы или участки соединены последовательно? Назови общий узел и объясни, есть ли там ответвление."
+            },
+            "results": [],
+            "errors": {},
+            "case_correct": 0,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": true,
+            "show_options": false
+          },
+          "after": {
+            "phase": "guided",
+            "index": 0,
+            "operation": 2,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": null,
+            "results": [],
+            "errors": {},
+            "case_correct": 0,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": true,
+            "show_options": false
+          },
+          "reply": "Пока не получилось подтвердить состав и соединение участков. Запиши каждый целый участок отдельно и укажи его внешние узлы.",
+          "grounding": {
+            "status": "matched",
+            "source_ids": [],
+            "retrieved_source_ids": [
+              "concept-1",
+              "concept-4",
+              "concept-8",
+              "C01-facts",
+              "C01-component-help",
+              "C01-series-hint",
+              "C01-series"
+            ],
+            "intent": "answer",
+            "answer_verified": false,
+            "help_scope": "none",
+            "assessment": "contradiction"
+          },
+          "state_check": true,
+          "state_consistent": true,
+          "full_pending_preserved": false
+        },
+        {
+          "text": "Подтвердить",
+          "before": {
+            "phase": "guided",
+            "index": 0,
+            "operation": 2,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": null,
+            "results": [],
+            "errors": {},
+            "case_correct": 0,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": true,
+            "show_options": false
+          },
+          "after": {
+            "phase": "guided",
+            "index": 0,
+            "operation": 2,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": null,
+            "results": [],
+            "errors": {},
+            "case_correct": 0,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": true,
+            "show_options": false
+          },
+          "reply": "Сейчас нет ответа, ожидающего подтверждения. Запиши своё решение.\n\nКакие элементы или участки соединены последовательно? Назови общий узел и объясни, есть ли там ответвление.",
+          "grounding": null,
+          "state_check": true,
+          "state_consistent": true,
+          "full_pending_preserved": true
+        }
+      ],
+      "model_calls": [
+        {
+          "kind": "extract",
+          "response": "{\n    \"intent\": \"answer\",\n    \"question_text\": \"\",\n    \"withdraws_previous\": true,\n    \"solution\": {\n        \"retracted_evidence\": [\n            \"s1\"\n        ],\n        \"universals\": [],\n        \"relations\": [\n            {\n                \"relation\": \"series\",\n                \"groups\": [\n                    \"R1\",\n                    \"R3\"\n                ],\n                \"nodes\": [\n                    \"A\"\n                ],\n                \"no_extra_branch\": false,\n                \"evidence\": \"s2\"\n            }\n        ],\n        \"no_relation\": \"series\",\n        \"no_relation_evidence\": \"\"\n    }\n}",
+          "source_ids": [],
+          "evidence_chunks": {
+            "s0": "Отменяю свой предыдущий ответ. Теперь считаю R1 и R3 последовательными, поскольку оба касаются A",
+            "s1": "Отменяю свой предыдущий ответ",
+            "s2": "Теперь считаю R1 и R3 последовательными, поскольку оба касаются A",
+            "s3": "R1 и",
+            "s4": "R3 последовательными, поскольку оба касаются A"
+          }
+        }
+      ],
+      "seconds": 4.6,
+      "content_review": "pending",
+      "provider_check": true,
+      "pending_check": true
+    },
+    {
+      "id": "D17",
+      "suite": "audit",
+      "case": "C03",
+      "step": 0,
+      "text": "А третий резистор, о котором мы говорили раньше, здесь куда исчез?",
+      "expect": "stay",
+      "history": [
+        {
+          "role": "assistant",
+          "text": "На прежней схеме C01 были резисторы R1, R2, R3. Теперь открыта C03 с лампами L1 и L2."
+        }
+      ],
+      "turns": [
+        {
+          "text": "А третий резистор, о котором мы говорили раньше, здесь куда исчез?",
+          "before": {
+            "phase": "spoken",
+            "index": 2,
+            "operation": 0,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": null,
+            "results": [],
+            "errors": {},
+            "case_correct": 0,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": true,
+            "show_options": false
+          },
+          "after": {
+            "phase": "spoken",
+            "index": 2,
+            "operation": 0,
+            "tries": 0,
+            "teacher": false,
+            "assisted": false,
+            "revealed": false,
+            "pending": null,
+            "results": [],
+            "errors": {},
+            "case_correct": 0,
+            "scores": {},
+            "reserve": null,
+            "spoken_named": true,
+            "show_options": false
+          },
+          "reply": "Сосчитай подписанные элементы в каждой ветви. Перечисли обозначения рядом с прямоугольниками.",
+          "grounding": {
+            "status": "matched",
+            "source_ids": [
+              "C03-elements-hint"
+            ],
+            "retrieved_source_ids": [
+              "concept-6",
+              "concept-8",
+              "concept-7",
+              "C03-facts",
+              "C03-elements-hint",
+              "C03-elements"
+            ],
+            "intent": "question",
+            "answer_verified": false,
+            "help_scope": "drawing",
+            "assessment": "incomplete"
+          },
+          "state_check": true,
+          "state_consistent": true,
+          "full_pending_preserved": true
+        }
+      ],
+      "model_calls": [
+        {
+          "kind": "extract",
+          "response": "{\n    \"intent\": \"question\",\n    \"question_text\": \"А третий резистор, о котором мы говорили раньше, здесь куда исчез\",\n    \"withdraws_previous\": false,\n    \"solution\": {\n        \"retracted_evidence\": [],\n        \"universals\": [],\n        \"elements\": {\n            \"names\": [\n                \"L1\",\n                \"L2\"\n            ],\n            \"evidence\": \"\"\n        }\n    }\n}",
+          "source_ids": [],
+          "evidence_chunks": {
+            "s0": "А третий резистор, о котором мы говорили раньше, здесь куда исчез",
+            "s1": "третий резистор, о котором мы говорили раньше, здесь куда исчез"
+          }
+        },
+        {
+          "kind": "plan",
+          "response": "{\n    \"scope\": \"drawing\",\n    \"mode\": \"explain\",\n    \"topic\": \"elements\"\n}",
+          "source_ids": [],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "select",
+          "response": "{\n    \"answer_kind\": \"explain\",\n    \"source_ids\": [\n        \"C03-inventory\"\n    ]\n}",
+          "source_ids": [
+            "concept-6",
+            "concept-8",
+            "concept-7",
+            "C03-elements-hint",
+            "C03-inventory"
+          ],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "check",
+          "response": "{\n    \"supported\": true,\n    \"answers_question\": false,\n    \"reveals_solution\": false\n}",
+          "source_ids": [
+            "concept-6",
+            "concept-8",
+            "concept-7",
+            "C03-elements-hint",
+            "C03-inventory"
+          ],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "select",
+          "response": "{\n    \"answer_kind\": \"explain\",\n    \"source_ids\": [\n        \"C03-inventory\"\n    ]\n}",
+          "source_ids": [
+            "concept-6",
+            "concept-8",
+            "concept-7",
+            "C03-elements-hint",
+            "C03-inventory"
+          ],
+          "evidence_chunks": null
+        },
+        {
+          "kind": "check",
+          "response": "{\n    \"supported\": true,\n    \"answers_question\": false,\n    \"reveals_solution\": false\n}",
+          "source_ids": [
+            "concept-6",
+            "concept-8",
+            "concept-7",
+            "C03-elements-hint",
+            "C03-inventory"
+          ],
+          "evidence_chunks": null
+        }
+      ],
+      "seconds": 5.92,
+      "content_review": "pending",
+      "provider_check": true
+    }
+  ]
+}

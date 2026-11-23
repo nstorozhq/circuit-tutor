@@ -9,6 +9,43 @@ from app.knowledge import CASES, INTRO, question
 from app.rag import RagResult, retrieve, validate_result
 
 
+class ProviderDeadlineTests(unittest.IsolatedAsyncioTestCase):
+    async def test_budget_includes_queue_and_cancels_request_on_python_310(self):
+        import asyncio
+        from unittest.mock import AsyncMock
+        from app.model import GigaChat, TURN_DEADLINE
+        model = GigaChat()
+        model.request = AsyncMock(return_value='{}')
+        await model.request_lock.acquire()
+        token = TURN_DEADLINE.set(asyncio.get_running_loop().time() + 0.02)
+        try:
+            with self.assertRaises(asyncio.TimeoutError):
+                await model.complete('test', {})
+            model.request.assert_not_awaited()
+        finally:
+            model.request_lock.release()
+            TURN_DEADLINE.reset(token)
+        cancelled = asyncio.Event()
+        async def slow_request(*args):
+            try:
+                await asyncio.Future()
+            finally:
+                cancelled.set()
+        model.request = slow_request
+        token = TURN_DEADLINE.set(asyncio.get_running_loop().time() + 0.02)
+        try:
+            with self.assertRaises(asyncio.TimeoutError):
+                await model.complete('test', {})
+            self.assertTrue(cancelled.is_set())
+        finally:
+            TURN_DEADLINE.reset(token)
+        model.credentials = 'offline-test'
+        model.complete = AsyncMock(side_effect=asyncio.TimeoutError)
+        task = question(CASES['C01'], 'nodes')
+        _, status = await model.rag('Что такое узел?', task, retrieve(CASES['C01'], task, 'Что такое узел?'))
+        self.assertEqual(status, 'unavailable')
+
+
 class RagModel:
     enabled = True
 

@@ -1,0 +1,113 @@
+{
+  "date": "2026-11-23",
+  "reviewer": "application author; manual reading of all 31 cases with the six latest repetitions",
+  "overall_content_approval": false,
+  "full_live_run": {
+    "file": "followup_results_release_final_2026-11-23.json",
+    "cases": 31,
+    "turns": 34,
+    "state_pass": 34,
+    "provider_cases_pass": 31,
+    "post_get_equal": true,
+    "source_hashes": {
+      "accounts.py": "ae5a8d382b2543f26d651155f8f77b4866702c6cf63b5b934014ab3d583d0b69",
+      "claims.py": "475fa8967ad9f818cf68ce63daa9d58d291de6a6c7e6bd87f22657d6a475ec50",
+      "__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "model.py": "e2f08a82607a1b5fc8afa632ad37cd12834c8ab26c906a651ca943765b066585",
+      "answers.py": "034f9a56f9a0277aca64cd1c426289714cf542a4fffd1b042df2827b153aecc1",
+      "rag.py": "af050c9aca91190152844006fbde4186e0d5003c37e8f5163a532f1df2a83137",
+      "main.py": "199b474be4a8be6a454b35ff00fdd89006a4bcc8ea5da4d687c86c768b7326a6",
+      "knowledge.py": "de6ae7e52f05ec1843cd3b91cfd27e8333152aefe4fe25c00111b244bdea6fe3",
+      "tutor.py": "a30ad987c57544475b8cfe779ea494983c3d3be39017cbc27e17464dd9ea0939",
+      "knowledge_base/lesson.json": "a9404894d173d3960553add13d9ef02426d17bc64936ac478b33d2bcdab53c88"
+    }
+  },
+  "latest_targeted_live_run": {
+    "file": "followup_results_help_refinement_2026-11-23.json",
+    "cases": 6,
+    "turns": 7,
+    "state_pass": 7,
+    "provider_cases_pass": 6,
+    "source_hashes": {
+      "accounts.py": "ae5a8d382b2543f26d651155f8f77b4866702c6cf63b5b934014ab3d583d0b69",
+      "claims.py": "9c1ad43bc77e5bd0d7d93215ed69873bfc1d4fcd211ca93215ae89ab28c3e2a0",
+      "__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "model.py": "e2f08a82607a1b5fc8afa632ad37cd12834c8ab26c906a651ca943765b066585",
+      "answers.py": "034f9a56f9a0277aca64cd1c426289714cf542a4fffd1b042df2827b153aecc1",
+      "rag.py": "af050c9aca91190152844006fbde4186e0d5003c37e8f5163a532f1df2a83137",
+      "main.py": "199b474be4a8be6a454b35ff00fdd89006a4bcc8ea5da4d687c86c768b7326a6",
+      "knowledge.py": "de6ae7e52f05ec1843cd3b91cfd27e8333152aefe4fe25c00111b244bdea6fe3",
+      "tutor.py": "a30ad987c57544475b8cfe779ea494983c3d3be39017cbc27e17464dd9ea0939",
+      "knowledge_base/lesson.json": "07d228c3caed9312dcd22c8ce2411519c2a41f062b8c9eb5e5724cacd27851e3"
+    }
+  },
+  "difference_after_full_run": "Only general KB explanation of whole sections and a neutral clarification message changed. Final targeted run carries the current app/KB hashes. No change to grading or state transitions after the full run.",
+  "offline_validation": {
+    "unit_tests": 65,
+    "unit_pass": 65,
+    "portable_api_cases": 12,
+    "portable_api_pass": 12,
+    "server_python": "3.10.12",
+    "server_unit_pass": 65,
+    "server_api_pass": 12
+  },
+  "improvements_observed": [
+    "Correct solution and separate term question are handled in one turn (D01).",
+    "A term question preserves the pending solution; withdrawal invalidates it.",
+    "Geometry explanation, explicit correct feedback and hidden-contact uncertainty work in the observed live cases.",
+    "D02 and D04 now explain both endpoints and whole sections."
+  ],
+  "remaining_limits": [
+    {
+      "id": "original-7",
+      "status": "partial",
+      "observation": "Explains whole parallel branches generally; does not apply the criterion to the specific L1–L2/L3–L4 and A/B required by the strict criterion."
+    },
+    {
+      "id": "D17",
+      "status": "unstable_direct_answer",
+      "observation": "Full run lists current L1,L2; latest repetition gives a generic inventory hint. No false grade or lost progress, but the question about the previous drawing is not directly answered."
+    },
+    {
+      "id": "D09",
+      "status": "conservative_false_negative",
+      "observation": "Correct placement expressed as numbers in words is not fully extracted; asks for labels instead of progressing. Its automatic stay expectation must not be mistaken for successful semantic understanding."
+    },
+    {
+      "id": "D05",
+      "status": "clarification_improved",
+      "observation": "No unjustified grade; neutral request for section composition and external nodes. Model extraction may still fail to preserve whole-group composition."
+    }
+  ],
+  "limits": "Observed finite cases do not prove extraction completeness, general speech understanding or universal relevance. State-check pass is not content pass. Independent auditor conclusion is stored separately.",
+  "deployment_issue": {
+    "cause": "Production Python 3.10 lacks asyncio.timeout; discovered by public smoke (AttributeError before provider request).",
+    "fix": "asyncio.wait_for covers queue and request; catch asyncio.TimeoutError on Python 3.10. One async regression checks queue, cancellation and unavailable handling. No prompt/KB/grading change.",
+    "test_compatibility": "TestCase.enterContext replaced with ExitStack/addCleanup; old TimeoutError assertion changed to asyncio.TimeoutError. Test expectations preserved."
+  },
+  "production_smoke": {
+    "file": "production_smoke_results_2026-11-23.json",
+    "pass": true,
+    "checks": [
+      "HTTPS and frontend assets",
+      "real GigaChat correct-answer acknowledgement",
+      "definition without progress reset",
+      "mixed correct pairs and term question",
+      "POST→GET state consistency",
+      "idempotent retry",
+      "stale version 409"
+    ]
+  },
+  "current_source_hashes": {
+    "app/accounts.py": "ae5a8d382b2543f26d651155f8f77b4866702c6cf63b5b934014ab3d583d0b69",
+    "app/claims.py": "9c1ad43bc77e5bd0d7d93215ed69873bfc1d4fcd211ca93215ae89ab28c3e2a0",
+    "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/model.py": "f9a7d7fc207572c13ea8f49b2adc00603fdf94b86cb93097bdf3b485079bf643",
+    "app/answers.py": "034f9a56f9a0277aca64cd1c426289714cf542a4fffd1b042df2827b153aecc1",
+    "app/rag.py": "af050c9aca91190152844006fbde4186e0d5003c37e8f5163a532f1df2a83137",
+    "app/main.py": "199b474be4a8be6a454b35ff00fdd89006a4bcc8ea5da4d687c86c768b7326a6",
+    "app/knowledge.py": "de6ae7e52f05ec1843cd3b91cfd27e8333152aefe4fe25c00111b244bdea6fe3",
+    "app/tutor.py": "a30ad987c57544475b8cfe779ea494983c3d3be39017cbc27e17464dd9ea0939",
+    "knowledge_base/lesson.json": "07d228c3caed9312dcd22c8ce2411519c2a41f062b8c9eb5e5724cacd27851e3"
+  }
+}

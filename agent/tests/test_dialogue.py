@@ -26,7 +26,7 @@ class DialogueModel:
     async def rag(self, text, task, sources, *, history=()):
         self.history = history
         self.calls += 1
-        data = {"intent": self.intent, "option": "A", "evidence": text}
+        data = {"intent": self.intent, "option": "A" if task["choices"] else None, "evidence": text}
         result = validate_result(RagResult.model_validate(data), text, sources, task["choices"])
         return result, "matched"
 
@@ -73,6 +73,20 @@ class DialoguePolicyTests(unittest.TestCase):
             self.assertNotIn("L1: A", message)
 
 
+def protocol_responses(responses):
+    import json
+    from unittest.mock import AsyncMock
+    from app.rag import SUPPORT_PLAN_PROMPT
+    first = json.loads(responses[0])
+    scope = first.get("help_scope", "procedure")
+    pending = iter(responses)
+    async def complete(prompt, payload):
+        if prompt == SUPPORT_PLAN_PROMPT:
+            return json.dumps({"scope": scope, "mode": "explain"})
+        return next(pending)
+    return AsyncMock(side_effect=complete)
+
+
 class ModelProtocolTests(unittest.TestCase):
     def test_wrong_semantic_match_cannot_be_proposed_as_correct(self):
         from unittest.mock import AsyncMock
@@ -83,28 +97,29 @@ class ModelProtocolTests(unittest.TestCase):
         correct = next("ABCD"[i] for i, choice in enumerate(task["choices"]) if choice["key"] == "correct")
         model = GigaChat()
         model.credentials = "fixture"
-        model.complete = AsyncMock(side_effect=[
-            '{"intent":"answer"}',
-            '{"option":"' + correct + '","evidence":"model reconstruction","branches":[]}',
+        model.complete = protocol_responses([
+            '{"intent":"answer","option":"' + correct + '","evidence":"model reconstruction","branches":[]}',
             '{"verdict":"contradiction"}',
+            '{"explanation":"Проверь, есть ли ответвления.","source_ids":["C01-series-hint"]}',
+            '{"supported":true,"answers_question":true,"reveals_solution":false}',
         ])
         text = "Все три резистора последовательны."
         result, status = asyncio.run(model.rag(text, task, retrieve(CASES["C01"], task, text)))
         self.assertEqual(status, "matched")
         self.assertIsNone(result.option)
-        self.assertEqual(result.intent, "hint")
+        self.assertFalse(result.answer_verified)
 
-    def test_plain_intent_and_grounded_explanation_are_supported(self):
+    def test_question_uses_concept_sources_and_grounded_explanation(self):
         from unittest.mock import AsyncMock
         from app.model import GigaChat
         from app.knowledge import question, CASES
         from app.rag import retrieve
         model = GigaChat()
         model.credentials = "fixture"
-        model.complete = AsyncMock(side_effect=[
-            "question",
+        model.complete = protocol_responses([
+            '{"intent":"question","question_text":"А изгиб считается?","help_scope":"concept"}',
             '{"explanation":"Изгиб провода не создаёт нового узла.","source_ids":["concept-0"]}',
-            '{"verdict":"supported"}',
+            '{"supported":true,"answers_question":true,"reveals_solution":false}',
         ])
         task = question(CASES["C01"], "nodes")
         text = "А изгиб считается?"
@@ -122,14 +137,15 @@ class ModelProtocolTests(unittest.TestCase):
         from app.rag import retrieve
         model = GigaChat()
         model.credentials = "fixture"
-        model.complete = AsyncMock(side_effect=[
-            "question",
+        model.complete = protocol_responses([
+            '{"intent":"question","question_text":"А изгиб считается?","help_scope":"concept"}',
             '{"explanation":"Ответ из постороннего файла","source_ids":["outside-lesson"]}',
         ])
         task = question(CASES["C01"], "nodes")
         result, status = asyncio.run(model.rag("Почему?", task, retrieve(CASES["C01"], task, "Почему?")))
-        self.assertIsNone(result)
-        self.assertEqual(status, "unclear")
+        self.assertEqual(status, "matched")
+        self.assertFalse(result.answer_verified)
+        self.assertNotIn("outside-lesson", result.source_ids)
 
 
 class CircuitClaimTests(unittest.TestCase):
@@ -191,7 +207,8 @@ class VerifiedAnswerPriorityTests(unittest.TestCase):
         original = copy.deepcopy(state)
         text = "а что такое резистор?"
         sources = retrieve(CASES["C01"], current_question(state), text)
-        self.assertTrue(all(source["id"].startswith("concept-") for source in sources))
+        from app.rag import support_sources
+        self.assertTrue(all(source["id"].startswith("concept-") for source in support_sources(sources, text, "concept")))
         source = next(source for source in sources if source["id"] == "concept-6")
         model = SimpleNamespace(enabled=True, rag=AsyncMock(return_value=(
             RagResult(intent="question", explanation=source["text"], source_ids=[source["id"]]), "matched",

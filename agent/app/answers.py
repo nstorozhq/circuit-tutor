@@ -28,7 +28,7 @@ def recall_matches(step, text):
     return bool(re.match(prefix + "(?:" + RECALL_VERBS[step] + r")\b", norm(text)))
 
 
-def branch_claims(raw):
+def branch_claims(raw, *, strict=False):
     text = norm(raw)
     if re.search(ELEMENT_NEGATION, text) or re.search(UNSURE, text):
         return {}
@@ -39,7 +39,8 @@ def branch_claims(raw):
         rf"|(?P<leading_direction>{directions})(?: вет\w*)? (?P<following_names>{components})"
     )
     claims = {}
-    for match in re.finditer(pattern, text):
+    matches = list(re.finditer(pattern, text))
+    for match in matches:
         direction = match["direction"] or match["leading_direction"]
         branch = "upper" if direction.startswith(("верх", "сверху", "наверху", "вверху")) else "lower"
         names = set(COMPONENT.findall(match["names"] or match["following_names"]))
@@ -48,6 +49,13 @@ def branch_claims(raw):
         return {}
     if set(COMPONENT.findall(text)) != set().union(*claims.values()):
         return {}
+    if strict:
+        remainder = re.sub(pattern, " ", text)
+        remainder = re.sub(r"^(?:привет|здравствуйте|добрый день)\b", " ", remainder.strip())
+        # Only the closed answer notation is eligible for a parser-only grade.
+        # Additional prose must go through semantic verification as a whole.
+        if re.sub(r"\bи\b|\s+", "", remainder):
+            return {}
     return claims
 
 
@@ -55,6 +63,7 @@ def elements_match(raw, reference):
     text = norm(raw)
     return (
         set(COMPONENT.findall(text)) == set(COMPONENT.findall(norm(reference)))
+        and not re.sub(r"\b[rl][1-9]\d*\b|\bи\b|\s+", "", text)
         and not re.search(ELEMENT_NEGATION, text)
         and not re.search(r"\b(?:источник\w*|батаре\w*|провод|соединительн\w* провод\w*)\b", text)
     )
@@ -126,7 +135,8 @@ def allows_correct_suggestion(phase, task, raw):
         return elements_match(raw, reference)
     if step == "nodes":
         parsed = node_claims(raw)
-        return bool(parsed) and parsed == node_claims(reference) and not re.search(r"\bне\b", text)
+        notation = re.fullmatch(r"(?:[rl][1-9]\d* (?:[a-z]|неизвестно) (?:[a-z]|неизвестно) ?)+", answer_key(raw, "nodes"))
+        return bool(notation and parsed) and parsed == node_claims(reference)
 
     # Keep every claim and qualification in a conclusion. Only known
     # synonyms are interchangeable here.

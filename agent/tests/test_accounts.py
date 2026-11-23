@@ -1,7 +1,7 @@
 import sqlite3
 import tempfile
 import unittest
-from contextlib import closing
+from contextlib import ExitStack, closing
 from pathlib import Path
 from unittest.mock import patch
 
@@ -14,8 +14,10 @@ class AccountsTests(unittest.TestCase):
     credentials = {"username": "student_test", "password": "test-password-254321"}
 
     def setUp(self):
-        self.enterContext(patch.dict("os.environ", {"GIGACHAT_CREDENTIALS": ""}))
-        temporary = self.enterContext(tempfile.TemporaryDirectory())
+        self.contexts = ExitStack()
+        self.addCleanup(self.contexts.close)
+        self.contexts.enter_context(patch.dict("os.environ", {"GIGACHAT_CREDENTIALS": ""}))
+        temporary = self.contexts.enter_context(tempfile.TemporaryDirectory())
         self.db = Path(temporary) / "lessons.sqlite3"
         with closing(sqlite3.connect(self.db)) as db, db:
             db.execute("""
@@ -25,7 +27,7 @@ class AccountsTests(unittest.TestCase):
                 )
                 """)
         self.app = create_app(self.db)
-        self.browser = self.enterContext(TestClient(self.app, base_url="https://lesson.test"))
+        self.browser = self.contexts.enter_context(TestClient(self.app, base_url="https://lesson.test"))
 
     def another_browser(self):
         return TestClient(self.app, base_url="https://lesson.test")

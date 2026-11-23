@@ -241,9 +241,9 @@ def support_reply(state, text, result=None):
     if intent in ("hint", "unsure"):
         state["assisted"] = True
     if result and result.explanation:
-        return with_prompt(state, result.explanation)
+        return result.explanation
     if result and result.quotes:
-        return with_prompt(state, "\n\n".join(quote.text for quote in result.quotes))
+        return "\n\n".join(quote.text for quote in result.quotes)
     if intent == "partial":
         return with_prompt(state, "Ответ пока неполный. Допиши недостающие элементы или связи.")
     if intent == "clarify":
@@ -253,6 +253,16 @@ def support_reply(state, text, result=None):
         if explanation:
             return with_prompt(state, "Давай разберём связь. " + explanation["text"])
     return help_reply(state, "подсказка")
+
+
+def add_explanation(reply, result):
+    if not result or not result.question_text:
+        return reply
+    explanation = result.explanation or "\n\n".join(quote.text for quote in result.quotes)
+    if not explanation:
+        return reply
+    acknowledgement, separator, following = reply.partition("\n\n")
+    return "\n\n".join(part for part in (acknowledgement, explanation, following) if part)
 
 
 def verified_training_answer(state, text):
@@ -267,7 +277,7 @@ def verified_training_answer(state, text):
             key: set(re.findall(r"[rl]\d+", branch.lower()))
             for key, branch in zip(("upper", "lower"), branches)
         }
-        return branch_claims(text) == expected
+        return branch_claims(text, strict=True) == expected
     if current.get("step") in ("elements", "nodes"):
         return allows_correct_suggestion(
             state["phase"], current, resolve_ordinal_elements(text, shape.components),
@@ -288,6 +298,12 @@ async def respond(state, text, model, *, history=()):
         if request in ("исправить", "нет"):
             state["pending"] = None
             return with_prompt(state, "Напиши ответ точнее или выбери подходящий вариант.")
+        if request.startswith(("нет ", "исправить ")):
+            # The leading rejection is an explicit reply to the confirmation
+            # control, even when a question follows it in the same turn.
+            state["pending"] = None
+    if request in ("подтвердить", "да"):
+        return with_prompt(state, "Сейчас нет ответа, ожидающего подтверждения. Запиши своё решение.")
     current = current_question(state)
     verified_answer = verified_training_answer(state, text)
     exact_choice = any(answer_key(item["text"], current.get("step")) == answer_key(text, current.get("step"))
@@ -299,22 +315,33 @@ async def respond(state, text, model, *, history=()):
     rag_status = "disabled"
     if text and not exact_choice and not command and state["phase"] not in ("test", "done") and hasattr(model, "rag"):
         sources = retrieve(active_case(state), current, text, history=history)
-        rag_result, rag_status = await model.rag(text, current, sources, history=history)
+        task = {**current, "pending_answer": state["pending"], "case_id": active_case(state)["id"]}
+        rag_result, rag_status = await model.rag(text, task, sources, history=history)
+        if rag_result and rag_result.withdraws_previous:
+            state["pending"] = None
         if getattr(model, "enabled", False):
             state["last_rag"] = {
-                "status": rag_status, "source_ids": [source["id"] for source in sources],
+                "status": rag_status, "source_ids": rag_result.source_ids if rag_result else [],
+                "retrieved_source_ids": [source["id"] for source in sources],
                 "intent": rag_result.intent if rag_result else None,
+                "answer_verified": rag_result.answer_verified if rag_result else False,
+                "help_scope": rag_result.help_scope if rag_result else None,
+                "assessment": rag_result.assessment_status if rag_result else None,
             }
-        if rag_result and rag_result.intent != "answer" and not verified_answer:
+        verified_model_answer = bool(rag_result and rag_result.answer_verified)
+        if rag_status == "unavailable" and not verified_model_answer and not verified_answer:
+            return "Помощник временно недоступен. Ответ не оценён, прогресс сохранён.\n\n" + support_reply(state, text, rag_result)
+        if rag_result and not verified_model_answer and not verified_answer:
             return support_reply(state, text, rag_result)
-        if asks_for_help(text):
+        if asks_for_help(text) and not verified_model_answer and not verified_answer:
             return support_reply(state, text)
     if (getattr(model, "enabled", False) and hasattr(model, "rag")
             and rag_status in ("unavailable", "unclear") and not verified_answer):
         return support_reply(state, text)
-    if asks_for_help(text) and state["phase"] not in ("test", "done"):
+    model_verified = bool(rag_result and rag_result.answer_verified)
+    if asks_for_help(text) and not model_verified and not verified_answer and state["phase"] not in ("test", "done"):
         return support_reply(state, text)
-    help_text = help_reply(state, text)
+    help_text = None if model_verified else help_reply(state, text)
     if help_text is not None:
         return help_text
     phase = state["phase"]
@@ -331,9 +358,9 @@ async def respond(state, text, model, *, history=()):
             for key, branch in zip(("upper", "lower"), branches)
         }
         unsure = bool(re.search(r"не знаю|откуда (?:я |мне )?зна|затрудняюсь|не получается", request))
-        claims = branch_claims(text)
+        claims = branch_claims(text, strict=True)
         explicit_claims = claims
-        if rag_result:
+        if rag_result and rag_result.answer_verified:
             if rag_result.branches:
                 claims = {}
             for branch in rag_result.branches:
@@ -346,19 +373,23 @@ async def respond(state, text, model, *, history=()):
                 claims = {}
             if explicit_claims and explicit_claims != claims:
                 claims = explicit_claims
-            unsure = not verified_answer and rag_result.intent == "unsure"
+            unsure = False
         if claims != expected and not unsure:
             if claims:
+                if all(values <= expected.get(position, set()) for position, values in claims.items()):
+                    return support_reply(state, text, rag_result) if rag_result and (
+                        rag_result.explanation or rag_result.quotes
+                    ) else with_prompt(state, "Ответ пока неполный. Укажи расположение остальных элементов.")
                 return with_prompt(state, "В расположении резисторов есть ошибка. Проследи каждую ветвь от A до B и проверь подписи.")
             return with_prompt(state, "Напиши отдельно, какие обозначения стоят сверху и какие снизу. Если трудно, напиши «не знаю».")
         state.update(phase="guided", operation=1, tries=0, case_correct=int(not unsure),
                      assisted=state["assisted"] or unsure)
         feedback = "Верно." if not unsure else "Давай разберём вместе."
-        return with_prompt(
+        return add_explanation(with_prompt(
             state,
             f"{feedback} В верхней ветви стоят {upper}, в нижней — {lower}. "
             "Теперь проследим, к каким точкам подключён каждый резистор.",
-        )
+        ), rag_result)
 
     current = current_question(state)
     state["pending"] = None
@@ -367,9 +398,9 @@ async def respond(state, text, model, *, history=()):
     correct = next((choice for choice in choices if choice["key"] == "correct"), None)
     naming_action = phase == "spoken" and not state.get("spoken_named", False)
     if naming_action:
-        if rag_result and rag_result.option:
+        if rag_result and rag_result.answer_verified and rag_result.option:
             selected = choices["ABCD".index(rag_result.option)]
-            return grade(state, selected)
+            return add_explanation(grade(state, selected), rag_result)
         if recall_matches(step, text):
             response = grade(state, correct)
             _, separator, result = text.partition(".")
@@ -397,6 +428,13 @@ async def respond(state, text, model, *, history=()):
         return with_prompt(state, "Назови действие своими словами или выбери его в списке.")
     if phase == "test":
         return with_prompt(state, "На контрольной выбери один вариант и нажми «Отправить вариант».")
+    if rag_result and rag_result.answer_verified and rag_result.option:
+        selected = choices["ABCD".index(rag_result.option)]
+        if selected["key"] == "correct" and contradicts_all_elements(
+            text, step, CIRCUITS[active_case(state)["id"]],
+        ):
+            return support_reply(state, text)
+        return add_explanation(grade(state, selected), rag_result)
     if step == "elements" and elements_match(text, current["reference"]):
         return grade(state, correct)
     if step == "nodes" and allows_correct_suggestion(

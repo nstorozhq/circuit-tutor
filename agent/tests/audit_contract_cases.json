@@ -1,0 +1,571 @@
+[
+  {
+    "id": "K01_hidden_no_parallel",
+    "case": "C06",
+    "step": "parallel",
+    "text": "Параллельных участков нет.",
+    "expected_statuses": [
+      "incomplete"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "relations": [],
+      "no_relation": "parallel",
+      "no_relation_evidence": "Параллельных участков нет",
+      "terminals": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "K02_unknown_overall_cannot_complete",
+    "case": "C08",
+    "step": "overall",
+    "text": "Не определить однозначно: второй вывод L3 скрыт. Он может идти к B или к C.",
+    "expected_statuses": [
+      "complete"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "relations": [],
+      "no_relation": "none",
+      "no_relation_evidence": "",
+      "overall": "unknown",
+      "overall_evidence": "Не определить однозначно: второй вывод L3 скрыт",
+      "terminals": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "K03_valid_series_subchains",
+    "case": "C02",
+    "step": "series",
+    "text": "L1 и L2 последовательно: C без ответвлений. L2 и L3 последовательно: D без ответвлений.",
+    "expected_statuses": [
+      "complete",
+      "incomplete"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "relations": [
+        {
+          "relation": "series",
+          "groups": [
+            "L1",
+            "L2"
+          ],
+          "nodes": [
+            "C"
+          ],
+          "no_extra_branch": true,
+          "evidence": "L1 и L2 последовательно: C без ответвлений"
+        },
+        {
+          "relation": "series",
+          "groups": [
+            "L2",
+            "L3"
+          ],
+          "nodes": [
+            "D"
+          ],
+          "no_extra_branch": true,
+          "evidence": "L2 и L3 последовательно: D без ответвлений"
+        }
+      ],
+      "no_relation": "none",
+      "no_relation_evidence": "",
+      "terminals": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "K04_valid_parallel_subgroups",
+    "case": "C07",
+    "step": "parallel",
+    "text": "R1 и R2 параллельны между A и B. R2 и R3 параллельны между A и B.",
+    "expected_statuses": [
+      "complete",
+      "incomplete"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "relations": [
+        {
+          "relation": "parallel",
+          "groups": [
+            "R1",
+            "R2"
+          ],
+          "nodes": [
+            "A",
+            "B"
+          ],
+          "no_extra_branch": false,
+          "evidence": "R1 и R2 параллельны между A и B"
+        },
+        {
+          "relation": "parallel",
+          "groups": [
+            "R2",
+            "R3"
+          ],
+          "nodes": [
+            "A",
+            "B"
+          ],
+          "no_extra_branch": false,
+          "evidence": "R2 и R3 параллельны между A и B"
+        }
+      ],
+      "no_relation": "none",
+      "no_relation_evidence": "",
+      "terminals": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "K05_universal_domain_branches",
+    "case": "C01",
+    "step": "parallel",
+    "text": "R1–R2 и R3 имеют общие A и B. Все эти ветви параллельны.",
+    "expected_statuses": [
+      "complete",
+      "incomplete"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [
+        {
+          "relation": "parallel",
+          "value": true,
+          "evidence": "Все эти ветви параллельны"
+        }
+      ],
+      "relations": [
+        {
+          "relation": "parallel",
+          "groups": [
+            "R1+R2",
+            "R3"
+          ],
+          "nodes": [
+            "A",
+            "B"
+          ],
+          "no_extra_branch": false,
+          "evidence": "R1–R2 и R3 имеют общие A и B"
+        }
+      ],
+      "no_relation": "none",
+      "no_relation_evidence": "",
+      "terminals": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "K06_negated_terminals",
+    "case": "C01",
+    "step": "nodes",
+    "text": "R1 не соединён с A и C. R2: C–B. R3: A–B.",
+    "expected_statuses": [
+      "incomplete",
+      "contradiction"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "terminals": [
+        {
+          "element": "R1",
+          "nodes": [
+            "A",
+            "C"
+          ],
+          "evidence": "R1 не соединён с A и C"
+        },
+        {
+          "element": "R2",
+          "nodes": [
+            "C",
+            "B"
+          ],
+          "evidence": "R2: C–B"
+        },
+        {
+          "element": "R3",
+          "nodes": [
+            "A",
+            "B"
+          ],
+          "evidence": "R3: A–B"
+        }
+      ],
+      "relations": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "K07_negated_inventory",
+    "case": "C03",
+    "step": "elements",
+    "text": "На этой схеме нет L1 и L2.",
+    "expected_statuses": [
+      "incomplete",
+      "contradiction"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "elements": {
+        "names": [
+          "L1",
+          "L2"
+        ],
+        "evidence": "На этой схеме нет L1 и L2"
+      },
+      "terminals": [],
+      "relations": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "K08_negated_relation",
+    "case": "C04",
+    "step": "parallel",
+    "text": "R2 и R3 не параллельны, хотя у обоих C и B.",
+    "expected_statuses": [
+      "incomplete",
+      "contradiction"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "relations": [
+        {
+          "relation": "parallel",
+          "groups": [
+            "R2",
+            "R3"
+          ],
+          "nodes": [
+            "C",
+            "B"
+          ],
+          "no_extra_branch": false,
+          "evidence": "R2 и R3 не параллельны, хотя у обоих C и B"
+        }
+      ],
+      "no_relation": "none",
+      "no_relation_evidence": "",
+      "terminals": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "K09_fragment_drops_negation",
+    "case": "C01",
+    "step": "nodes",
+    "text": "Неверно, что R1: A–C. R2: C–B. R3: A–B.",
+    "expected_statuses": [
+      "incomplete",
+      "contradiction"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "terminals": [
+        {
+          "element": "R1",
+          "nodes": [
+            "A",
+            "C"
+          ],
+          "evidence": "R1: A–C"
+        },
+        {
+          "element": "R2",
+          "nodes": [
+            "C",
+            "B"
+          ],
+          "evidence": "R2: C–B"
+        },
+        {
+          "element": "R3",
+          "nodes": [
+            "A",
+            "B"
+          ],
+          "evidence": "R3: A–B"
+        }
+      ],
+      "relations": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "K10_universal_wrong_predicate_evidence",
+    "case": "C01",
+    "step": "nodes",
+    "text": "R1: A–C. R2: C–B. R3: A–B. У всех трёх одинаковая пара узлов.",
+    "expected_statuses": [
+      "incomplete",
+      "contradiction"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "terminals": [
+        {
+          "element": "R1",
+          "nodes": [
+            "A",
+            "C"
+          ],
+          "evidence": "R1: A–C"
+        },
+        {
+          "element": "R2",
+          "nodes": [
+            "C",
+            "B"
+          ],
+          "evidence": "R2: C–B"
+        },
+        {
+          "element": "R3",
+          "nodes": [
+            "A",
+            "B"
+          ],
+          "evidence": "R3: A–B"
+        }
+      ],
+      "relations": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "K11_other_predicate_not_representable",
+    "case": "C01",
+    "step": "nodes",
+    "text": "R1: A–C. R2: C–B. R3: A–B. R1 и R3 параллельны.",
+    "expected_statuses": [
+      "incomplete",
+      "contradiction"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "terminals": [
+        {
+          "element": "R1",
+          "nodes": [
+            "A",
+            "C"
+          ],
+          "evidence": "R1: A–C"
+        },
+        {
+          "element": "R2",
+          "nodes": [
+            "C",
+            "B"
+          ],
+          "evidence": "R2: C–B"
+        },
+        {
+          "element": "R3",
+          "nodes": [
+            "A",
+            "B"
+          ],
+          "evidence": "R3: A–B"
+        }
+      ],
+      "relations": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "K12_unrelated_negation_as_reason",
+    "case": "C01",
+    "step": "series",
+    "text": "R1 и R2 последовательны через C. Я не понимаю провод R3.",
+    "expected_statuses": [
+      "incomplete",
+      "contradiction"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "relations": [
+        {
+          "relation": "series",
+          "groups": [
+            "R1",
+            "R2"
+          ],
+          "nodes": [
+            "C"
+          ],
+          "no_extra_branch": true,
+          "evidence": "R1 и R2 последовательны через C. Я не понимаю провод R3"
+        }
+      ],
+      "no_relation": "none",
+      "no_relation_evidence": "",
+      "terminals": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "K13_absence_substring",
+    "case": "C03",
+    "step": "series",
+    "text": "Интернет пропал.",
+    "expected_statuses": [
+      "incomplete"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "relations": [],
+      "no_relation": "series",
+      "no_relation_evidence": "Интернет пропал",
+      "terminals": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "K14_position_evidence_reversed",
+    "case": "C01",
+    "step": "branches",
+    "text": "R1 и R2 снизу. R3 сверху.",
+    "expected_statuses": [
+      "incomplete",
+      "contradiction"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "placements": {
+        "R1": {
+          "position": "upper",
+          "evidence": "R1 и R2 снизу"
+        },
+        "R2": {
+          "position": "upper",
+          "evidence": "R1 и R2 снизу"
+        },
+        "R3": {
+          "position": "lower",
+          "evidence": "R3 сверху"
+        }
+      },
+      "branches": [
+        {
+          "position": "upper",
+          "elements": [
+            "R1"
+          ],
+          "evidence": "R1 и R2 снизу"
+        },
+        {
+          "position": "upper",
+          "elements": [
+            "R2"
+          ],
+          "evidence": "R1 и R2 снизу"
+        },
+        {
+          "position": "lower",
+          "elements": [
+            "R3"
+          ],
+          "evidence": "R3 сверху"
+        }
+      ],
+      "terminals": [],
+      "relations": []
+    }
+  },
+  {
+    "id": "CTRL_correct_pairs",
+    "case": "C01",
+    "step": "nodes",
+    "text": "R1: A–C. R2: C–B. R3: A–B.",
+    "expected_statuses": [
+      "complete"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "terminals": [
+        {
+          "element": "R1",
+          "nodes": [
+            "A",
+            "C"
+          ],
+          "evidence": "R1: A–C"
+        },
+        {
+          "element": "R2",
+          "nodes": [
+            "C",
+            "B"
+          ],
+          "evidence": "R2: C–B"
+        },
+        {
+          "element": "R3",
+          "nodes": [
+            "A",
+            "B"
+          ],
+          "evidence": "R3: A–B"
+        }
+      ],
+      "relations": [],
+      "branches": []
+    }
+  },
+  {
+    "id": "CTRL_maximal_series",
+    "case": "C02",
+    "step": "series",
+    "text": "L1 и L2 и L3 последовательно через C и D без ответвлений.",
+    "expected_statuses": [
+      "complete"
+    ],
+    "claims": {
+      "retracted_evidence": [],
+      "universals": [],
+      "relations": [
+        {
+          "relation": "series",
+          "groups": [
+            "L1",
+            "L2",
+            "L3"
+          ],
+          "nodes": [
+            "C",
+            "D"
+          ],
+          "no_extra_branch": true,
+          "evidence": "L1 и L2 и L3 последовательно через C и D без ответвлений"
+        }
+      ],
+      "no_relation": "none",
+      "no_relation_evidence": "",
+      "terminals": [],
+      "branches": []
+    }
+  }
+]

@@ -112,6 +112,13 @@ def alternatives(correct, distractors, hint, seed, custom=None):
     return choices
 
 
+def describe_series(group, points):
+    return (f"{' и '.join(group)} соединены последовательно. "
+            + (f"Нет ответвлений в узлах {', '.join(points)}."
+               if not any(item.startswith("(") for item in group)
+               else f"В узлах {', '.join(points)} между этими участками нет отдельной ветви."))
+
+
 def question(case, step):
     shape = CIRCUITS[case["id"]]
     components = shape.components
@@ -119,10 +126,7 @@ def question(case, step):
     hidden = next((name for name, _, b in components if b is None), None)
     nodes = "; ".join(f"{name}: {a}–{b or '?'}" for name, a, b in components)
     series = "; ".join(
-        f"{' и '.join(group)} соединены последовательно. "
-        + (f"Нет ответвлений в узлах {', '.join(points)}."
-           if not any(item.startswith("(") for item in group)
-           else f"В узлах {', '.join(points)} между этими участками нет отдельной ветви.")
+        describe_series(group, points)
         for group, points in shape.series
     )
     if hidden and shape.series:
