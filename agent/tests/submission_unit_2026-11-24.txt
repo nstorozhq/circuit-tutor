@@ -1,0 +1,7 @@
+Explanation failed; preserving independently checked answer
+Explanation failed; preserving independently checked answer
+GigaChat RAG request failed (TimeoutError, status=None)
+----------------------------------------------------------------------
+Ran 69 tests in 0.682s
+
+OK

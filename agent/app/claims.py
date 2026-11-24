@@ -47,6 +47,19 @@ def resolve_evidence(value, chunks):
     return value
 
 
+def literal_overall(evidence):
+    """Only an explicit, unambiguous type in the learner's own conclusion counts."""
+    first = re.split(r"[.;:,\n]|\bпотому\b|\bпоскольку\b|\bтак как\b", evidence, maxsplit=1, flags=re.I)[0]
+    text = norm(first)
+    if re.search(r"недостаточ\w* (?:данн\w*|информац\w*)|(?:не|нельзя|невозможно) определ\w*", text):
+        return "unknown"
+    if re.search(r"\b(?:не|нет|если|или)\b", text):
+        return None
+    kinds = {kind for kind, pattern in (("mixed", r"смешан\w*|комбинирован\w*"),
+             ("series", r"последоват\w*"), ("parallel", r"параллел\w*")) if re.search(pattern, text)}
+    return next(iter(kinds)) if len(kinds) == 1 else None
+
+
 def sourced_solution(solution, text, shape):
     """Remove extraction artefacts lacking learner provenance; they cannot earn credit."""
     result = dict(solution)
@@ -55,6 +68,10 @@ def sourced_solution(solution, text, shape):
         quote = literal_evidence(item, text, shape)
         if not quote or not item.get("names") or not {norm(name) for name in item["names"]} <= names(quote):
             result["elements"] = {}
+    if result.get("overall_evidence") and result["overall_evidence"] in text:
+        declared = literal_overall(result["overall_evidence"])
+        if declared:
+            result["overall"] = declared
     for key in ("terminals", "relations", "branches", "universals"):
         kept = []
         for item in solution.get(key, []):
@@ -381,6 +398,8 @@ def assess_solution(case_id, task, solution, text, *, question_text=""):
         return "incomplete", "Проверь, все ли участки этого вида ты назвал, и обоснуй каждый."
     if step == "overall":
         expected_type = "unknown" if unknown else "mixed" if shape.series and shape.parallel else "series" if shape.series else "parallel"
+        if literal_overall(solution.get("overall_evidence", "")) != solution.get("overall"):
+            return "incomplete", "Запиши общий тип соединения явно: он должен совпадать с твоим пояснением."
         if solution.get("overall") != expected_type:
             return "contradiction", "Общий вывод пока не соответствует связям на схеме."
         if not solution.get("overall_evidence") or solution["overall_evidence"] not in text:
@@ -416,7 +435,8 @@ def solution_schema(step, components, node_labels, chunks):
     if step == "branches":
         placements = {}
         for element in components:
-            available = [key for key, quote in chunks.items() if element.lower() in names(quote)]
+            available = [key for key, quote in chunks.items()
+                         if element.lower() in names(resolve_ordinal_elements(quote, [(name, None, None) for name in components]))]
             placements[element] = obj({"position": enum(("upper", "lower", "not_stated")),
                                        "evidence": {"type": "string", "enum": ["", *available]}})
         properties["placements"] = obj(placements)

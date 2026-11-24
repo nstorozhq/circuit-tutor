@@ -86,8 +86,13 @@ def resolve_ordinal_elements(text, components):
     roots = ("перв", "втор", "трет", "четверт", "пят", "шест",
              "седьм", "восьм", "девят", "десят", "одиннадцат", "двенадцат")
     result = norm(text)
+    cardinals = ("один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять", "десять", "одиннадцать", "двенадцать")
+    for name, _, _ in components:
+        number = int(re.search(r"\d+", name)[0])
+        if 1 <= number <= len(cardinals):
+            result = re.sub(r"\bномер (?:" + str(number) + "|" + cardinals[number - 1] + r")\b", name.lower(), result)
     for root, (name, _, _) in zip(roots, components):
-        result = re.sub(r"\b" + root + r"\w*\b", name.lower(), result)
+        result = re.sub(r"\b" + root + r"\w*\b(?!\s+(?:вывод|контакт))", name.lower(), result)
     return result
 
 

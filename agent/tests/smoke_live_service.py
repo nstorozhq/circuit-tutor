@@ -36,9 +36,15 @@ with httpx.Client(base_url=base, timeout=45) as client:
         Path(sys.argv[1]).write_text(json.dumps({'target':base,'turns':rows,'pass':False},ensure_ascii=False,indent=2))
         return session
     turn('Привет ещё раз! Ветку сверху составляют р1 вместе с р2; под ними идёт р3.')
-    assert session['state']['phase'] == 'guided'
+    assert session['state']['phase'] == 'method'
     assert session['message']['text'].startswith('Верно.')
     assert session['message']['grounding']['status'] == 'matched'
+    turn('Сначала выделю элементы, затем узлы и проверю соединения.')
+    assert session['state']['phase'] == 'method_compare'
+    turn('Добавлю проверку ответвлений и общий вывод.')
+    assert session['state']['phase'] == 'guided'
+    turn('R1, R2, R3')
+    assert session['state']['step_label'] == 'Узлы'
     nodes_question = session['state']['question']
     turn('А что такое резистор?')
     assert session['state']['question'] == nodes_question

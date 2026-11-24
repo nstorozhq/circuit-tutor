@@ -201,8 +201,12 @@ class GigaChat:
             payload["revision_needed"] = {
                 key: check.get(key) for key in ("supported", "answers_question", "reveals_solution")
             }
-        # A relevant concept or a single procedural hint is a bounded fallback.
-        fallback = next((source for source in selected if source["id"].endswith("-hint")), selected[0])
+        # On a factual drawing question, keep the sole checked drawing fact
+        # instead of silently changing the request into a procedural hint.
+        atoms = [source for source in selected if source["id"].startswith(str(case_id) + "-")
+                 and not source["id"].endswith("-hint")]
+        fallback = (atoms[0] if scope == "drawing" and plan.mode == "explain" and len(atoms) == 1 else
+                    next((source for source in selected if source["id"].endswith("-hint")), selected[0]))
         return RagResult(intent="question", help_scope=scope, quotes=[{
             "source_id": fallback["id"], "text": fallback["text"],
         }], source_ids=[fallback["id"]])

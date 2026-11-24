@@ -58,6 +58,9 @@ class LessonTests(unittest.TestCase):
 
     def enter_training(self):
         self.send("r1 и r2 на верхней\nr3 на нижней")
+        self.send("Сначала найду элементы и узлы, затем проверю соединения.")
+        self.send("Добавлю проверку ответвлений и общий вывод.")
+        self.send("R1, R2, R3")
 
     def enter_model_step(self):
         self.enter_training()
@@ -81,13 +84,13 @@ class LessonTests(unittest.TestCase):
         self.assertEqual(result["state"]["phase"], "trial")
         self.assertIn("От A проследи верхний провод", result["message"]["text"])
         self.assertNotIn("Смешанное", result["message"]["text"])
-        self.assertEqual(self.send("R1 и R2 сверху, R3 снизу")["state"]["step_label"], "Узлы")
+        self.assertEqual(self.send("R1 и R2 сверху, R3 снизу")["state"]["phase"], "method")
 
     def test_branch_answer_is_checked_before_continuing(self):
         for text in ("R1 сверху, R2 и R3 снизу", "Не R1 и R2 сверху, а R3", "R1 и R2 сверху"):
             self.assertEqual(self.send(text)["state"]["phase"], "trial")
         result = self.send("r1 и r2 на верхней\nr3 на нижней")
-        self.assertEqual(result["state"]["step_label"], "Узлы")
+        self.assertEqual(result["state"]["phase"], "method")
         self.assertIn("Верно", result["message"]["text"])
         self.assertNotIn("Сравни", result["message"]["text"])
         self.assertNotIn("Смешанное", result["message"]["text"])
@@ -117,11 +120,14 @@ class LessonTests(unittest.TestCase):
         with closing(sqlite3.connect(self.db)) as db, db:
             db.execute("UPDATE sessions SET version=2, history=?", (json.dumps(history),))
         current = self.client.get(self.url).json()
-        self.assertEqual(current["state"]["step_label"], "Узлы")
+        self.assertEqual(current["state"]["phase"], "method")
         self.assertIn("ответ о ветвях верный", current["messages"][-1]["text"])
         self.assertIn("Резистор — элемент", current["messages"][-1]["text"])
         self.assertEqual(len(current["messages"]), len(self.client.get(self.url).json()["messages"]))
         self.session = current
+        self.send("Сначала элементы, затем узлы и соединения.")
+        self.send("Использовать образец")
+        self.send("R1, R2, R3")
         result = self.send("R1: A–C; R2: C–B; R3: A–B")
         self.assertEqual(result["state"]["step_label"], "Последовательные участки")
         saved = self.client.get(self.url).json()

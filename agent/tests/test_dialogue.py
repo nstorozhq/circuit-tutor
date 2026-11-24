@@ -193,8 +193,8 @@ class VerifiedAnswerPriorityTests(unittest.TestCase):
                     state = new_state()
                     reply = asyncio.run(respond(state, text, model))
                     self.assertTrue(reply.startswith("Верно."))
-                    self.assertEqual(state["phase"], "guided")
-                    self.assertEqual(state["operation"], 1)
+                    self.assertEqual(state["phase"], "method")
+                    self.assertEqual(state["operation"], 0)
                     self.assertEqual(model.rag.await_count, 1)
 
     def test_definition_keeps_step_and_pending_answer(self):

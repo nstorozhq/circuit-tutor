@@ -127,23 +127,23 @@ class Store:
         if state["phase"] == "trial" and any(
             item["role"] == "user" and verified_training_answer(state, item["text"]) for item in history
         ):
-            state.update(phase="guided", operation=1, pending=None, tries=0, case_correct=1)
+            state.update(phase="method", operation=0, pending=None, tries=0, case_correct=1)
             explanation = ""
             latest_user = next((item["text"] for item in reversed(history) if item["role"] == "user"), "")
             if QUESTION_START.match(norm(latest_user)):
                 explanation = "\n\n".join(item["text"] for item in lookup(latest_user))
-            message = "Ранее отправленный ответ о ветвях верный. Продолжим с узлов."
+            message = "Ранее отправленный ответ о ветвях верный. Теперь составим способ решения."
             if explanation:
                 message += "\n\n" + explanation
             history.append({
                 "id": "recover-verified-answer", "role": "assistant",
                 "text": message + "\n\n" + view(state)["question"],
             })
-        if state["phase"] in ("compare", "method"):
-            state.update(phase="guided", operation=1, pending=None, tries=0)
+        if state["phase"] == "compare":
+            state.update(phase="method", operation=0, pending=None, tries=0)
             history.append({
                 "id": "continue-with-nodes", "role": "assistant",
-                "text": "Продолжим разбирать схему по шагам. Проследи провод от каждого вывода резистора до буквы узла.",
+                "text": "Составим порядок разбора схемы. " + view(state)["question"],
             })
         return row["version"], state, history, existing
 

@@ -79,6 +79,8 @@ class RagTests(unittest.TestCase):
                     "version": 0, "message_id": "start",
                     "text": "r1 на верхней r2 на верхней\nr3 на нижней",
                 }).json()
+                for i, text in enumerate(("Сначала элементы и узлы.", "Использовать образец", "R1, R2, R3")):
+                    session = client.post(path, json={"version": session["version"], "message_id": f"method-{i}", "text": text}).json()
                 model.payload = {"intent": "unsure", "branches": [], "quotes": []}
                 for status in ("matched", "unclear", "unavailable"):
                     model.status = status
@@ -104,7 +106,7 @@ class RagTests(unittest.TestCase):
                 path = f"/api/sessions/{session['id']}/turns"
                 text = "r1 на верхней r2 на верхней\nr3 на нижней"
                 result = client.post(path, json={"version": 0, "message_id": "rag", "text": text}).json()
-                self.assertEqual(result["state"]["step_label"], "Узлы")
+                self.assertEqual(result["state"]["phase"], "method")
                 self.assertIn("Верно", result["message"]["text"])
                 self.assertEqual(model.requests[0][0], text)
                 sources = model.requests[0][2]

@@ -6,12 +6,12 @@ from .answers import (
 )
 from .knowledge import (
     CASES, CIRCUITS, COURSE, INTRO, STEPS, STEP_NAMES, lookup, norm, question, recall_question,
-    reference_answer
+    reference_answer, METHOD_REFERENCE
 )
 from .rag import asks_for_help, component_help, retrieve
 
 PHASES = {
-    "trial": "Первая попытка", "method": "Способ решения",
+    "trial": "Первая попытка", "method": "Способ решения", "method_compare": "Сопоставление способа",
     "guided": "Разбор с помощью", "spoken": "Проговаривание", "solo": "Самостоятельно",
     "test": "Контрольная", "done": "Результат",
 }
@@ -33,6 +33,7 @@ def new_state():
         "phase": "trial", "index": 0, "operation": 0, "tries": 0, "teacher": False,
         "assisted": False, "revealed": False, "pending": None, "results": [], "errors": {},
         "case_correct": 0, "scores": {}, "reserve": None, "spoken_named": False, "show_options": False,
+        "method_proposal": None, "method_comparison": None,
     }
 
 
@@ -70,7 +71,7 @@ def pending_choice(state, current):
 
 def view(state):
     phase = state["phase"]
-    case = active_case(state) if phase != "method" else None
+    case = active_case(state) if phase not in ("method", "method_compare") else None
     shape = CIRCUITS[case["id"]] if case else None
     current = current_question(state)
     confirming = pending_choice(state, current) is not None
@@ -288,6 +289,32 @@ def verified_training_answer(state, text):
 async def respond(state, text, model, *, history=()):
     text = text.strip()
     request = norm(text)
+    if state["phase"] in ("method", "method_compare"):
+        # This is a discussion of a finite procedure, not another physical grade.
+        if request in ("подсказка", "покажи ответ", "полный разбор"):
+            state["assisted"] = True
+            return with_prompt(state, "Образец способа решения:\n" + METHOD_REFERENCE)
+        help_text = help_reply(state, text)
+        if help_text is not None:
+            return help_text
+        if not text:
+            return with_prompt(state, "Напиши свой план." if state["phase"] == "method" else "Напиши результат сопоставления.")
+        if state["phase"] == "method":
+            unsure = asks_for_help(text)
+            relevant = re.search(r"элемент\w*|резистор\w*|ламп\w*|уз(?:ел|л)\w*|вывод\w*|последоват\w*|параллел\w*|соедин\w*", request)
+            if not unsure and not relevant:
+                return with_prompt(state, "Опиши действия со схемой: например, какие обозначения и подключения будешь искать.")
+            state.update(phase="method_compare", method_proposal=text, pending=None)
+            state["assisted"] = state["assisted"] or unsure
+            lead = "Разберём порядок по образцу." if unsure else "Твой план записан. Вот образец для сопоставления."
+            return with_prompt(state, lead + "\n\n" + METHOD_REFERENCE)
+        adopting = request in ("план совпадает", "использовать образец")
+        comparing = re.search(r"добав\w*|уточн\w*|исправ\w*|поменя\w*|пропуст\w*|совпад\w*|сначала|затем|потом", request)
+        if not adopting and not comparing:
+            return with_prompt(state, "Укажи изменение в плане или напиши «План совпадает» либо «Использовать образец».")
+        state["method_comparison"] = text
+        state["method_completed"] = True
+        return with_prompt(state, "Способ зафиксирован. " + start_case(state))
     if state["pending"] is not None:
         selected = pending_choice(state, current_question(state))
         if selected and request in ("подтвердить", "да"):
@@ -365,7 +392,7 @@ async def respond(state, text, model, *, history=()):
                 claims = {}
             for branch in rag_result.branches:
                 claims.setdefault(branch.position, set()).update(element.lower() for element in branch.elements)
-            mentioned = set(re.findall(r"\b[rl][1-9]\d*\b", request))
+            mentioned = set(re.findall(r"\b[rl][1-9]\d*\b", resolve_ordinal_elements(text, CIRCUITS[case["id"]].components)))
             claimed = set().union(*claims.values())
             if claimed != mentioned or claims.get("upper", set()) & claims.get("lower", set()):
                 claims = {}
@@ -382,13 +409,13 @@ async def respond(state, text, model, *, history=()):
                     ) else with_prompt(state, "Ответ пока неполный. Укажи расположение остальных элементов.")
                 return with_prompt(state, "В расположении резисторов есть ошибка. Проследи каждую ветвь от A до B и проверь подписи.")
             return with_prompt(state, "Напиши отдельно, какие обозначения стоят сверху и какие снизу. Если трудно, напиши «не знаю».")
-        state.update(phase="guided", operation=1, tries=0, case_correct=int(not unsure),
+        state.update(phase="method", operation=0, tries=0, case_correct=int(not unsure), pending=None,
                      assisted=state["assisted"] or unsure)
         feedback = "Верно." if not unsure else "Давай разберём вместе."
         return add_explanation(with_prompt(
             state,
             f"{feedback} В верхней ветви стоят {upper}, в нижней — {lower}. "
-            "Теперь проследим, к каким точкам подключён каждый резистор.",
+            "Перед разбором составим способ решения.",
         ), rag_result)
 
     current = current_question(state)

@@ -68,7 +68,7 @@ class MixedTurnTests(unittest.TestCase):
                 model = self.model(self.branches(intent), {"verdict": "equivalent"})
                 reply = asyncio.run(respond(state, "R1 вместе с R2 вверху, один R3 внизу. Так?", model))
                 self.assertTrue(reply.startswith("Верно."))
-                self.assertEqual((state["phase"], state["operation"]), ("guided", 1))
+                self.assertEqual((state["phase"], state["operation"]), ("method", 0))
 
     def test_complete_solution_and_term_question_are_both_processed(self):
         state = self.state("C01", 1)
@@ -101,7 +101,7 @@ class MixedTurnTests(unittest.TestCase):
         )
         reply = asyncio.run(respond(state, "R1 и R2 вверху, R3 внизу. Что значит ветвь?", model))
         self.assertTrue(reply.startswith("Верно."))
-        self.assertEqual(state["operation"], 1)
+        self.assertEqual((state["phase"], state["operation"]), ("method", 0))
         self.assertIn("Ветвь", reply)
 
     def test_verifier_cannot_be_forged_in_extraction_json(self):
